@@ -1,13 +1,14 @@
 import mysql.connector
 from mysql.connector import Error
+import os
 
 # Database configuration
 DB_CONFIG = {
-    'host': 'localhost',
-    'user': 'root',
-    'password': 'aabbcc123',  # ← CHANGE THIS to your actual MariaDB password
-    'database': 'dream_pattern_db',
-    'port': 3307  # ← Added port (change to 3306 if that's your port)
+    'host': os.environ.get('MYSQLHOST', 'localhost'),
+    'user': os.environ.get('MYSQLUSER', 'root'),
+    'password': os.environ.get('MYSQLPASSWORD', 'aabbcc123'),
+    'database': os.environ.get('MYSQLDATABASE', 'dream_pattern_db'),
+    'port': int(os.environ.get('MYSQLPORT', 3307))
 }
 
 def get_db_connection():
