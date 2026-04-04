@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dream Details - DreamFlow</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-brand">✨ DreamFlow</div>
+            <ul class="navbar-nav">
+                <li><a href="/dashboard">Dashboard</a></li>
+                <li><a href="/add-dream">Add Dream</a></li>
+                <li><a href="/analytics">Analytics</a></li>
+                <li><a href="/chat">AI Analysis</a></li>
+                <li><a href="/subscription">Subscription</a></li>
+                <li><a href="#" onclick="logout()">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container" style="padding: 3rem 2rem;">
+        <div style="max-width: 900px; margin: 0 auto;">
+            
+            <!-- Back Button -->
+            <a href="/dashboard" class="btn btn-secondary" style="margin-bottom: 1rem;">
+                ← Back to Dashboard
+            </a>
+
+            <!-- Dream Details Card -->
+            <div class="card">
+                <div id="dreamDetails">
+                    <p class="text-muted">Loading dream details...</p>
+                </div>
+            </div>
+
+            <!-- Analyze Button -->
+            <div class="card" id="analyzeSection" style="display: none;">
+                <h3> AI Dream Analysis</h3>
+                <p class="text-muted">Get deep psychological insights about this dream</p>
+                <button class="btn btn-primary btn-block" onclick="analyzeDream()">
+                    Generate AI Analysis
+                </button>
+            </div>
+
+            <!-- Analysis History -->
+            <div class="card" id="analysisHistory" style="display: none;">
+                <h3> AI Analysis History</h3>
+                <p class="text-muted" id="analysisCount">Loading analyses...</p>
+                <div id="analysisContainer"></div>
+            </div>
+
+            <!-- Premium Notice -->
+            <div class="alert alert-info" id="premiumNotice" style="display: none;">
+                <strong>⭐ Premium Feature:</strong> AI dream analysis requires an active subscription. 
+                <a href="/subscription" style="color: var(--primary); font-weight: 600;">Upgrade now</a>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+    <script>
+        let currentDreamId = null;
+
+        // Get dream ID from URL
+        document.addEventListener('DOMContentLoaded', async () => {
+            const user = checkAuth();
+            if (!user) return;
+
+            // Get dream ID from URL query parameter
+            const urlParams = new URLSearchParams(window.location.search);
+            currentDreamId = urlParams.get('id');
+
+            if (!currentDreamId) {
+                alert('Dream not found');
+                window.location.href = '/dashboard';
+                return;
+            }
+
+            await loadDreamDetails(currentDreamId);
+            await loadAnalysisHistory(currentDreamId);
+        });
+
+        async function loadDreamDetails(dreamId) {
+            try {
+                const response = await fetch(`${API_BASE}/dreams/user/${getCurrentUser().user_id}`);
+                const dreams = await response.json();
+                
+                const dream = dreams.find(d => d.dream_id == dreamId);
+                
+                if (!dream) {
+                    alert('Dream not found');
+                    window.location.href = '/dashboard';
+                    return;
+                }
+
+                const detailsContainer = document.getElementById('dreamDetails');
+                detailsContainer.innerHTML = `
+                    <div class="dream-detail-header">
+                        <h1 style="margin-bottom: 0.5rem;"> ${dream.dname}</h1>
+                        <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+                            <span class="text-muted"> ${new Date(dream.dream_date).toLocaleDateString()}</span>
+                            <span class="badge" style="background: var(--primary); color: white;">
+                                 Intensity: ${dream.intensity}/10
+                            </span>
+                            ${dream.lucid ? '<span class="badge" style="background: var(--success); color: white;"> Lucid Dream</span>' : ''}
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 2rem;">
+                        <h3 style="margin-bottom: 0.5rem;"> Description</h3>
+                        <p style="line-height: 1.8; white-space: pre-wrap;">${dream.description}</p>
+                    </div>
+
+                    <div class="grid grid-2" style="margin-top: 2rem;">
+                        <div>
+                            <h4 style="margin-bottom: 0.5rem;">Created</h4>
+                            <p class="text-muted">${new Date(dream.created_at).toLocaleString()}</p>
+                        </div>
+                        <div style="text-align: right;">
+                            <button class="btn btn-danger" onclick="deleteDreamFromDetail(${dream.dream_id})">
+                                 Delete Dream
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                // Show analyze button
+                document.getElementById('analyzeSection').style.display = 'block';
+
+            } catch (error) {
+                console.error('Load dream details error:', error);
+                alert('Failed to load dream details');
+            }
+        }
+
+        async function loadAnalysisHistory(dreamId) {
+            try {
+                const response = await fetch(`${API_BASE}/dream-analyses/${dreamId}`);
+                const data = await response.json();
+
+                const historyDiv = document.getElementById('analysisHistory');
+                const countDiv = document.getElementById('analysisCount');
+                const container = document.getElementById('analysisContainer');
+
+                if (response.ok && data.analyses && data.analyses.length > 0) {
+                    historyDiv.style.display = 'block';
+                    countDiv.textContent = `${data.total_analyses} analysis(es) found`;
+
+                    // FIXED: Use array index + 1 for position-based numbering
+                    container.innerHTML = data.analyses.map((analysis, index) => `
+                        <div class="card" id="analysis-${analysis.analysis_id}" style="background: var(--bg-darker); margin-top: 1rem; padding: 1.5rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                                <div>
+                                    <span class="text-muted"> ${new Date(analysis.created_at).toLocaleString()}</span>
+                                    <span class="badge" style="background: var(--secondary); color: white; margin-left: 1rem;">
+                                        Analysis #${index + 1}
+                                    </span>
+                                </div>
+                                <button class="btn btn-danger" style="padding: 0.5rem 1rem;" onclick="deleteAnalysis(${analysis.analysis_id})">
+                                     Delete
+                                </button>
+                            </div>
+                            <div style="line-height: 1.8; white-space: pre-wrap;">
+                                ${analysis.interpretation}
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    historyDiv.style.display = 'none';
+                }
+
+            } catch (error) {
+                console.error('Load analysis history error:', error);
+            }
+        }
+
+        async function analyzeDream() {
+            const user = getCurrentUser();
+            
+            if (!confirm('Generate AI analysis for this dream? This will use your premium subscription.')) {
+                return;
+            }
+
+            try {
+                const button = event.target;
+                button.disabled = true;
+                button.textContent = '⏳ Analyzing...';
+
+                const response = await fetch(`${API_BASE}/analyze-dream/${currentDreamId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: user.user_id })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert('Analysis complete!');
+                    await loadAnalysisHistory(currentDreamId);
+                    button.textContent = ' Generate New Analysis';
+                } else if (data.premium_required) {
+                    document.getElementById('premiumNotice').style.display = 'block';
+                    setTimeout(() => {
+                        window.location.href = '/subscription';
+                    }, 2000);
+                } else {
+                    alert(' Error: ' + (data.error || 'Analysis failed'));
+                }
+
+                button.disabled = false;
+
+            } catch (error) {
+                console.error('Analyze dream error:', error);
+                alert(' Network error. Please try again.');
+                event.target.disabled = false;
+                event.target.textContent = ' Generate AI Analysis';
+            }
+        }
+
+        async function deleteDreamFromDetail(dreamId) {
+            if (!confirm('Are you sure you want to delete this dream? All analyses will be deleted too.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/dreams/${dreamId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    alert(' Dream deleted successfully!');
+                    window.location.href = '/dashboard';
+                } else {
+                    alert(' Failed to delete dream');
+                }
+            } catch (error) {
+                console.error('Delete error:', error);
+                alert(' Network error');
+            }
+        }
+
+        async function deleteAnalysis(analysisId) {
+            if (!confirm('Are you sure you want to delete this analysis?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/dream-analyses/${analysisId}`, {
+                    method: 'DELETE'
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Remove the analysis card from UI
+                    const analysisCard = document.getElementById(`analysis-${analysisId}`);
+                    if (analysisCard) {
+                        analysisCard.remove();
+                    }
+
+                    // Reload analysis history to update count
+                    await loadAnalysisHistory(currentDreamId);
+
+                    alert(' Analysis deleted successfully!');
+                } else {
+                    alert(' ' + (data.error || 'Failed to delete analysis'));
+                }
+            } catch (error) {
+                console.error('Delete analysis error:', error);
+                alert(' Network error');
+            }
+        }
+    </script>
+</body>
+</html>

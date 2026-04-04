@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subscription - DreamFlow</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-brand">DreamFlow</div>
+            <ul class="navbar-nav">
+                <li><a href="/dashboard">Dashboard</a></li>
+                <li><a href="/add-dream">Add Dream</a></li>
+                <li><a href="/analytics">Analytics</a></li>
+                <li><a href="/chat">AI Analysis</a></li>
+                <li><a href="/subscription">Subscription</a></li>
+                <li><a href="#" onclick="logout()">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container" style="padding: 3rem 2rem;">
+        <div class="text-center" style="margin-bottom: 3rem;">
+            <h1>Choose Your Plan</h1>
+            <p class="text-muted">Unlock the full power of AI dream analysis</p>
+        </div>
+
+        <!-- Current Subscription Status -->
+        <div class="card" id="currentPlan" style="display: none;">
+            <h3>Your Current Plan</h3>
+            <div id="planDetails"></div>
+        </div>
+
+        <!-- Pricing Grid -->
+        <div class="pricing-grid">
+            <!-- Free Trial -->
+            <div class="pricing-card">
+                <h3>Free Trial</h3>
+                <div class="pricing-price">$0</div>
+                <p class="text-muted">7 days</p>
+                
+                <ul class="pricing-features">
+                    <li>✅ Record unlimited dreams</li>
+                    <li>✅ Basic statistics</li>
+                    <li>✅ Dream journal</li>
+                    <li>No AI dream analysis</li>
+                    <li>No Advanced insights</li>
+                    <li>No Pattern detection</li>
+                </ul>
+                
+                <button class="btn btn-secondary btn-block" disabled>
+                    Included with signup
+                </button>
+            </div>
+
+            <!-- Monthly Plan -->
+            <div class="pricing-card featured">
+                <div class="pricing-badge">Most Popular</div>
+                <h3>Monthly</h3>
+                <div class="pricing-price">$9.99</div>
+                <p class="text-muted">per month</p>
+                
+                <ul class="pricing-features">
+                    <li>✅ Everything in Free</li>
+                    <li>✅ Unlimited AI analysis</li>
+                    <li>✅ Advanced dream insights</li>
+                    <li>✅ Pattern detection</li>
+                    <li>✅ Emotion tracking</li>
+                    <li>✅ Theme analysis</li>
+                </ul>
+                
+                <button class="btn btn-primary btn-block" id="monthlyBtn" onclick="subscribeToPlan('MONTHLY', 9.99)">
+                    Subscribe Monthly
+                </button>
+            </div>
+
+            <!-- Yearly Plan -->
+            <div class="pricing-card">
+                <h3>Yearly</h3>
+                <div class="pricing-price">$59.99</div>
+                <p class="text-muted">per year <span style="color: var(--success);">(Save 50%)</span></p>
+                
+                <ul class="pricing-features">
+                    <li>✅ Everything in Monthly</li>
+                    <li>✅ Priority support</li>
+                    <li>✅ Early access to features</li>
+                    <li>✅ Advanced analytics</li>
+                    <li>✅ Export dream journal</li>
+                    <li>✅ Best value!</li>
+                </ul>
+                
+                <button class="btn btn-primary btn-block" id="yearlyBtn" onclick="subscribeToPlan('YEARLY', 59.99)">
+                    Subscribe Yearly
+                </button>
+            </div>
+        </div>
+
+        <!-- Cancel Subscription Section -->
+        <div class="card mt-3" id="cancelSection" style="display: none;">
+            <h3>Manage Subscription</h3>
+            <p class="text-muted">You can cancel your subscription at any time. You'll keep access until the end of your billing period.</p>
+            <div style="display: flex; gap: 1rem;">
+                <button class="btn btn-danger" onclick="cancelSubscription()">
+                    Cancel Subscription
+                </button>
+                <button class="btn btn-success" onclick="reactivateSubscription()">
+                    Reactivate Auto-Renewal
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const user = checkAuth();
+            if (!user) return;
+
+            await loadSubscriptionStatus(user.user_id);
+        });
+
+        async function loadSubscriptionStatus(userId) {
+            try {
+                const response = await fetch(`${API_BASE}/subscription/${userId}`);
+                const data = await response.json();
+
+                if (data.has_subscription && data.subscription) {
+                    const sub = data.subscription;
+                    const isActive = data.is_active;
+
+                    document.getElementById('currentPlan').style.display = 'block';
+                    document.getElementById('planDetails').innerHTML = `
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <p><strong>Plan:</strong> ${sub.plan_type}</p>
+                                <p><strong>Status:</strong> 
+                                    <span class="badge" style="background: ${isActive ? 'var(--success)' : 'var(--danger)'}; color: white;">
+                                        ${sub.actual_status}
+                                    </span>
+                                </p>
+                                <p><strong>Ends:</strong> ${new Date(sub.end_date).toLocaleDateString()}</p>
+                                <p><strong>Auto-Renew:</strong> ${sub.auto_renew ? ' Yes' : ' No'}</p>
+                            </div>
+                        </div>
+                    `;
+
+                    if (isActive && sub.plan_type !== 'FREE_TRIAL') {
+                        document.getElementById('cancelSection').style.display = 'block';
+                    }
+
+                    // Update buttons based on current plan
+                    const monthlyBtn = document.getElementById('monthlyBtn');
+                    const yearlyBtn = document.getElementById('yearlyBtn');
+
+                    if (sub.plan_type === 'MONTHLY' && isActive) {
+                        monthlyBtn.textContent = ' Current Plan';
+                        monthlyBtn.classList.remove('btn-primary');
+                        monthlyBtn.classList.add('btn-success');
+                        monthlyBtn.disabled = true;
+                        monthlyBtn.onclick = null;
+                    } else if (sub.plan_type === 'YEARLY' && isActive) {
+                        yearlyBtn.textContent = ' Current Plan';
+                        yearlyBtn.classList.remove('btn-primary');
+                        yearlyBtn.classList.add('btn-success');
+                        yearlyBtn.disabled = true;
+                        yearlyBtn.onclick = null;
+                    }
+                }
+            } catch (error) {
+                console.error('Load subscription error:', error);
+            }
+        }
+
+        async function subscribeToPlan(planType, amount) {
+            const user = getCurrentUser();
+
+            // Show payment modal
+            showPaymentModal(planType, amount);
+        }
+
+        function showPaymentModal(planType, amount) {
+            const modal = document.createElement('div');
+            modal.className = 'payment-modal';
+            modal.innerHTML = `
+                <div class="payment-modal-content">
+                    <div class="payment-modal-header">
+                        <h3>Complete Your Subscription</h3>
+                        <button class="payment-modal-close" onclick="closePaymentModal()">&times;</button>
+                    </div>
+                    
+                    <div class="payment-plan-summary">
+                        <h4>${planType} Plan</h4>
+                        <p class="payment-amount">$${amount}</p>
+                    </div>
+
+                    <div class="payment-methods">
+                        <h4>Choose Payment Method</h4>
+                        
+                        <div class="payment-method-option selected" data-method="card">
+                            <div class="payment-method-icon">💳</div>
+                            <div class="payment-method-details">
+                                <div class="payment-method-name">Credit/Debit Card</div>
+                                <div class="payment-method-desc">Visa, Mastercard, American Express</div>
+                            </div>
+                        </div>
+
+                        <div class="payment-method-option" data-method="paypal">
+                            <div class="payment-method-icon">🅿️</div>
+                            <div class="payment-method-details">
+                                <div class="payment-method-name">PayPal</div>
+                                <div class="payment-method-desc">Fast, secure payment</div>
+                            </div>
+                        </div>
+
+                        <div class="payment-method-option" data-method="crypto">
+                            <div class="payment-method-icon">₿</div>
+                            <div class="payment-method-details">
+                                <div class="payment-method-name">Cryptocurrency</div>
+                                <div class="payment-method-desc">Bitcoin, Ethereum, USDT</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="payment-form" id="cardPaymentForm">
+                        <h4>Card Information</h4>
+                        <div class="form-group">
+                            <label class="form-label">Card Number</label>
+                            <input type="text" class="form-input" placeholder="1234 5678 9012 3456" maxlength="19">
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="form-group">
+                                <label class="form-label">Expiry Date</label>
+                                <input type="text" class="form-input" placeholder="MM/YY" maxlength="5">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">CVV</label>
+                                <input type="text" class="form-input" placeholder="123" maxlength="4">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Cardholder Name</label>
+                            <input type="text" class="form-input" placeholder="John Doe">
+                        </div>
+                    </div>
+
+                    <div class="payment-security">
+                        <div class="security-badges">
+                            <span>🔒 Secured by SSL</span>
+                            <span>🛡️ 256-bit encryption</span>
+                            <span>✅ PCI Compliant</span>
+                        </div>
+                    </div>
+
+                    <div class="payment-modal-footer">
+                        <button class="btn btn-secondary" onclick="closePaymentModal()">Cancel</button>
+                        <button class="btn btn-primary" onclick="processPayment('${planType}', ${amount})">
+                            Complete Payment - $${amount}
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+            modal.style.display = 'flex';
+
+            // Add payment method selection handlers
+            document.querySelectorAll('.payment-method-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    document.querySelectorAll('.payment-method-option').forEach(opt => opt.classList.remove('selected'));
+                    this.classList.add('selected');
+                });
+            });
+        }
+
+        function closePaymentModal() {
+            const modal = document.querySelector('.payment-modal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        async function processPayment(planType, amount) {
+            const user = getCurrentUser();
+            const selectedMethod = document.querySelector('.payment-method-option.selected').dataset.method;
+
+            try {
+                // Simulate payment processing
+                const response = await fetch(`${API_BASE}/subscribe`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: user.user_id,
+                        plan_type: planType,
+                        payment_method: selectedMethod.toUpperCase(),
+                        amount: amount
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    closePaymentModal();
+                    showAlert('Subscription activated successfully!', 'success');
+                    window.location.reload();
+                } else {
+                    showAlert(data.error || 'Payment failed', 'error');
+                }
+            } catch (error) {
+                console.error('Payment error:', error);
+                showAlert('Network error. Please try again.', 'error');
+            }
+        }
+
+        async function cancelSubscription() {
+            const user = getCurrentUser();
+
+            if (!confirm('Are you sure you want to cancel your subscription? You will keep access until the end of your billing period.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/cancel-subscription`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: user.user_id })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert(' ' + data.message);
+                    window.location.reload();
+                } else {
+                    alert(' ' + (data.error || 'Cancellation failed'));
+                }
+            } catch (error) {
+                console.error('Cancel subscription error:', error);
+                alert('Network error');
+            }
+        }
+
+        async function reactivateSubscription() {
+            const user = getCurrentUser();
+
+            if (!confirm('Reactivate auto-renewal for your subscription?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/reactivate-subscription`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: user.user_id })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert(' ' + data.message);
+                    window.location.reload();
+                } else {
+                    alert(' ' + (data.error || 'Reactivation failed'));
+                }
+            } catch (error) {
+                console.error('Reactivate subscription error:', error);
+                alert('Network error');
+            }
+        }
+    </script>
+</body>
+</html>

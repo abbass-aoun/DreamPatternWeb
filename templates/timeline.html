@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dream Timeline - DreamFlow</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .calendar-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background: var(--bg-darker);
+            border-radius: 0.5rem;
+        }
+        .month-nav {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .month-nav button {
+            padding: 0.5rem 1rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 0.25rem;
+            cursor: pointer;
+        }
+        .month-nav button:hover {
+            background: var(--secondary);
+        }
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+        }
+        .calendar-day-header {
+            padding: 0.5rem;
+            text-align: center;
+            font-weight: bold;
+            color: var(--text-muted);
+        }
+        .calendar-day {
+            aspect-ratio: 1;
+            padding: 0.5rem;
+            background: var(--bg-darker);
+            border-radius: 0.25rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            min-height: 80px;
+        }
+        .calendar-day:hover {
+            background: var(--bg);
+            transform: scale(1.05);
+        }
+        .calendar-day.other-month {
+            opacity: 0.3;
+        }
+        .calendar-day.has-dreams {
+            border: 2px solid var(--primary);
+        }
+        .calendar-day.today {
+            background: rgba(138, 43, 226, 0.2);
+            border: 2px solid var(--primary);
+        }
+        .day-number {
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+        }
+        .day-dreams {
+            font-size: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+        .dream-indicator {
+            padding: 0.125rem 0.25rem;
+            border-radius: 0.125rem;
+            font-size: 0.7rem;
+        }
+        .dream-indicator.lucid {
+            background: rgba(255, 215, 0, 0.3);
+            color: #ffd700;
+        }
+        .dream-indicator.normal {
+            background: rgba(138, 43, 226, 0.3);
+            color: var(--primary);
+        }
+        .dream-detail-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .dream-detail-modal.active {
+            display: flex;
+        }
+        .dream-detail-content {
+            background: var(--bg);
+            padding: 2rem;
+            border-radius: 1rem;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .dream-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .dream-item {
+            padding: 1rem;
+            background: var(--bg-darker);
+            border-radius: 0.5rem;
+            cursor: pointer;
+        }
+        .dream-item:hover {
+            background: var(--bg);
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-brand">✨ DreamFlow</div>
+            <ul class="navbar-nav">
+                <li><a href="/dashboard">Dashboard</a></li>
+                <li><a href="/timeline">Timeline</a></li>
+                <li><a href="/search">Search</a></li>
+                <li><a href="/collections">Collections</a></li>
+                <li><a href="/achievements">Achievements</a></li>
+                <li><a href="#" onclick="logout()">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="calendar-container">
+        <div class="calendar-header">
+            <div class="month-nav">
+                <button onclick="changeMonth(-1)">← Prev</button>
+                <h2 id="currentMonth"></h2>
+                <button onclick="changeMonth(1)">Next →</button>
+            </div>
+            <button class="btn btn-primary" onclick="goToToday()">Today</button>
+        </div>
+
+        <div class="calendar-grid" id="calendarGrid">
+            <!-- Calendar will be generated here -->
+        </div>
+
+        <div class="card">
+            <h3>Legend</h3>
+            <div style="display: flex; gap: 2rem; margin-top: 1rem;">
+                <div><span class="dream-indicator lucid">⭐</span> Lucid Dream</div>
+                <div><span class="dream-indicator normal">🌙</span> Regular Dream</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dream Detail Modal -->
+    <div class="dream-detail-modal" id="dreamModal">
+        <div class="dream-detail-content">
+            <h2 id="modalDate"></h2>
+            <div class="dream-list" id="modalDreams"></div>
+            <button class="btn btn-secondary" onclick="closeModal()" style="margin-top: 1rem;">Close</button>
+        </div>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+    <script src="/static/js/timeline.js"></script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

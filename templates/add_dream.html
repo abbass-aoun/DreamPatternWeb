@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Dream - Dream Pattern Analysis</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-brand">✨ DreamFlow</div>
+            <ul class="navbar-nav">
+                <li><a href="/dashboard">Dashboard</a></li>
+                <li><a href="/add-dream">Add Dream</a></li>
+                <li><a href="/analytics">Analytics</a></li>
+                <li><a href="/chat">AI Analysis</a></li>
+                <li><a href="/subscription">Subscription</a></li>
+                <li><a href="#" onclick="logout()">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container" style="padding: 3rem 2rem;">
+        <div class="card" style="max-width: 800px; margin: 0 auto;">
+            <div class="card-header">
+                <h2 class="card-title">Record Your Dream</h2>
+                <p class="card-subtitle">Capture the details while they're fresh in your mind</p>
+            </div>
+
+            <form id="addDreamForm">
+                <div class="form-group">
+                    <label for="dname" class="form-label">Dream Title</label>
+                    <input 
+                        type="text" 
+                        id="dname" 
+                        class="form-input" 
+                        placeholder="Give your dream a memorable name"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="description" class="form-label">Dream Description</label>
+                    <textarea 
+                        id="description" 
+                        class="form-textarea" 
+                        placeholder="Describe your dream in as much detail as you remember..."
+                        required
+                    ></textarea>
+                </div>
+
+                <div class="grid grid-2">
+                    <div class="form-group">
+                        <label for="dream_date" class="form-label">Date</label>
+                        <input 
+                            type="date" 
+                            id="dream_date" 
+                            class="form-input"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="intensity" class="form-label">Intensity (1-10)</label>
+                        <input 
+                            type="range" 
+                            id="intensity" 
+                            class="form-input" 
+                            min="1" 
+                            max="10" 
+                            value="5"
+                            oninput="document.getElementById('intensityValue').textContent = this.value"
+                        >
+                        <div class="text-center text-muted" style="margin-top: 0.5rem;">
+                            <span id="intensityValue">5</span>/10
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="form-check">
+                        <input 
+                            type="checkbox" 
+                            id="lucid" 
+                            class="form-check-input"
+                        >
+                        <label for="lucid" class="form-label"> This was a lucid dream</label>
+                    </div>
+                </div>
+
+                <!-- Emotions -->
+                <div class="form-group">
+                    <label class="form-label">Emotions (Optional)</label>
+                    <p class="text-muted" style="font-size: 0.875rem; margin-bottom: 0.5rem;">
+                        Click to select emotions you felt during the dream
+                    </p>
+                    <div id="emotionTags" class="tag-container">
+                        <p class="text-muted">Loading emotions...</p>
+                    </div>
+                </div>
+
+                <!-- Themes -->
+                <div class="form-group">
+                    <label class="form-label">Themes (Optional)</label>
+                    <p class="text-muted" style="font-size: 0.875rem; margin-bottom: 0.5rem;">
+                        What themes appeared in your dream?
+                    </p>
+                    <div id="themeTags" class="tag-container">
+                        <p class="text-muted">Loading themes...</p>
+                    </div>
+                </div>
+
+                <!-- Categories -->
+                <div class="form-group">
+                    <label class="form-label">Categories (Optional)</label>
+                    <p class="text-muted" style="font-size: 0.875rem; margin-bottom: 0.5rem;">
+                        How would you categorize this dream?
+                    </p>
+                    <div id="categoryTags" class="tag-container">
+                        <p class="text-muted">Loading categories...</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-2">
+                    <button type="button" class="btn btn-secondary" onclick="window.location.href='/dashboard'">
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        Save Dream
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

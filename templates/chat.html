@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Dream Analysis - Dream Pattern Analysis</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-brand">✨ DreamFlow</div>
+            <ul class="navbar-nav">
+                <li><a href="/dashboard">Dashboard</a></li>
+                <li><a href="/add-dream">Add Dream</a></li>
+                <li><a href="/analytics">Analytics</a></li>
+                <li><a href="/chat">AI Analysis</a></li>
+                <li><a href="/subscription">Subscription</a></li>
+                <li><a href="#" onclick="logout()">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container" style="padding: 3rem 2rem;">
+        <div style="max-width: 900px; margin: 0 auto;">
+            <div class="text-center mb-3">
+                <h1> AI Dream Analyst</h1>
+                <p class="text-muted">Get personalized insights about your dreams</p>
+            </div>
+
+            <div class="card">
+                <div class="chat-container">
+                    <div id="chatMessages" class="chat-messages">
+                        <div class="message message-bot">
+                            <div class="message-avatar">🤖</div>
+                            <div class="message-content">
+                                <p>Hello! I'm your AI dream analyst. I can help you:</p>
+                                <ul style="margin-top: 0.5rem; padding-left: 1.5rem;">
+                                    <li>Interpret dream symbols and meanings</li>
+                                    <li>Identify patterns in your dreams</li>
+                                    <li>Analyze emotions and themes</li>
+                                    <li>Provide psychological insights</li>
+                                </ul>
+                                <p style="margin-top: 0.5rem;">Tell me about a dream you'd like to explore!</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form id="chatForm" class="chat-input-container">
+                        <input 
+                            type="text" 
+                            id="chatInput" 
+                            class="form-input" 
+                            placeholder="Describe your dream or ask a question..."
+                            style="margin: 0;"
+                            required
+                        >
+                        <button type="submit" class="btn btn-primary">
+                            Send
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="alert alert-info mt-3">
+                <strong>💡 Tip:</strong> Be as detailed as possible when describing your dreams. 
+                Include emotions, colors, people, places, and any symbols you remember.
+            </div>
+
+            <div class="alert alert-info mt-2">
+                <strong>⭐ Premium Feature:</strong> AI dream analysis requires an active subscription. 
+                <a href="/subscription" style="color: var(--primary); font-weight: 600;">Upgrade now</a> 
+                to unlock unlimited AI-powered insights!
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

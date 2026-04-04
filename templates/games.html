@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Games - DreamFlow</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .games-container {
+            max-width: 95%;
+            width: 100%;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .games-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        
+        .games-header h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #e9d5ff, #c084fc, #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .games-category {
+            background: linear-gradient(145deg, rgba(30, 41, 59, 0.95), rgba(51, 65, 85, 0.95));
+            border-radius: 1.5rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(147, 51, 234, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(16px);
+        }
+        
+        .category-title {
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            color: #e9d5ff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .game-card {
+            background: linear-gradient(145deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
+            border: 1px solid rgba(147, 51, 234, 0.3);
+            border-radius: 1rem;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .game-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(147, 51, 234, 0.6), transparent);
+        }
+        
+        .game-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 16px 40px rgba(99, 102, 241, 0.4);
+            border-color: rgba(147, 51, 234, 0.6);
+        }
+        
+        .game-icon {
+            font-size: 5rem;
+            margin-bottom: 1.5rem;
+            display: block;
+        }
+        
+        .game-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #e9d5ff;
+        }
+        
+        .game-description {
+            color: #d8b4fe;
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+        
+        .play-button {
+            background: linear-gradient(135deg, var(--primary), #a855f7);
+            color: white;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 2rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+        
+        .play-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+        }
+        
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .game-container {
+            background: var(--bg-darker);
+            border-radius: 1rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .game-canvas-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 2rem 0;
+            background: #4EC0CA;
+            border-radius: 1rem;
+            padding: 1rem;
+            width: 100%;
+            max-width: 100%;
+            overflow-x: auto;
+        }
+        
+        .game-canvas-container canvas {
+            display: block;
+            max-width: 100%;
+            height: auto;
+        }
+        
+        .game-instructions {
+            background: var(--bg-darker);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-top: 1rem;
+        }
+        
+        .leaderboard-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: linear-gradient(145deg, rgba(30, 41, 59, 0.95), rgba(51, 65, 85, 0.95));
+            border-radius: 1rem;
+            padding: 2rem;
+            border: 1px solid rgba(147, 51, 234, 0.3);
+        }
+        
+        .leaderboard-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .leaderboard-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--bg-darker);
+            border-radius: 0.5rem;
+            overflow: hidden;
+        }
+        
+        .leaderboard-table th,
+        .leaderboard-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .leaderboard-table th {
+            background: rgba(99, 102, 241, 0.2);
+            color: #e9d5ff;
+            font-weight: 600;
+        }
+        
+        .leaderboard-entry {
+            transition: all 0.2s;
+        }
+        
+        .leaderboard-entry:hover {
+            background: rgba(99, 102, 241, 0.1);
+        }
+        
+        .leaderboard-entry.current-user {
+            background: rgba(147, 51, 234, 0.2);
+            font-weight: 600;
+        }
+        
+        #flappyCanvas {
+            border: 3px solid #2ECC71;
+            border-radius: 0.5rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            background: #4EC0CA;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-brand">✨ DreamFlow</div>
+            <ul class="navbar-nav">
+                <li><a href="/dashboard">Dashboard</a></li>
+                <li><a href="/games" class="active">Games</a></li>
+                <li><a href="/achievements">Achievements</a></li>
+                <li><a href="/shop">Shop</a></li>
+                <li><a href="#" onclick="logout()">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="games-container">
+        <div class="games-header">
+            <h1>🎮 Dream Games</h1>
+            <p class="text-muted">Master your dreams with our mind-enhancing game!</p>
+        </div>
+
+        <!-- Games Category -->
+        <div class="games-category">
+            <div class="category-title">
+                <span>🎮</span>
+                <span>Available Games</span>
+                <span>🎮</span>
+            </div>
+            
+            <div id="gamesGrid" class="games-grid"></div>
+        </div>
+
+        <!-- Game View -->
+        <div id="gameView" style="display: none;">
+            <div class="game-header">
+                <button class="btn btn-secondary" onclick="showGamesList()">← Back to Games</button>
+                <button class="btn btn-primary" onclick="showLeaderboard(currentGame)">View Leaderboard</button>
+            </div>
+
+            <!-- Flappy Bird Game -->
+            <div id="flappybirdContainer" class="game-container" style="display: none;">
+                <h2>🐦 Flappy Bird</h2>
+                <div class="game-canvas-container">
+                    <canvas id="flappyCanvas" width="1400" height="600"></canvas>
+                </div>
+                <div class="game-instructions">
+                    <h3>How to Play:</h3>
+                    <p><strong>Controls:</strong> Press SPACE or CLICK to flap</p>
+                    <p>🎯 Navigate through the green pipes without hitting them!</p>
+                    <p>💰 <strong>Rewards:</strong> Earn XP and Dream Coins based on your score!</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Leaderboard View -->
+        <div id="leaderboardView" style="display: none;">
+            <div class="leaderboard-header">
+                <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                    <button class="btn btn-secondary" onclick="showGamesList()">← Back to Games</button>
+                    <button class="btn btn-primary" onclick="refreshLeaderboard()">🔄 Refresh</button>
+                </div>
+                <h2>🏆 Global Leaderboard</h2>
+                <p class="text-muted">Top Players Worldwide</p>
+            </div>
+            <div id="leaderboardContent" class="leaderboard-container"></div>
+        </div>
+    </div>
+
+    <!-- Load scripts in CORRECT order -->
+    <script src="/static/js/app.js"></script>
+    <script src="/static/js/flappy.js"></script>
+    <script src="/static/js/games.js"></script>
+    
+    <script>
+        console.log('=== PAGE LOADED ===');
+        console.log('Functions available:');
+        console.log('- getCurrentUser:', typeof getCurrentUser);
+        console.log('- loadGames:', typeof loadGames);
+        console.log('- initFlappy:', typeof initFlappy);
+        console.log('- showGame:', typeof showGame);
+        
+        // Load games on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM Ready!');
+            
+            if (typeof loadGames === 'function') {
+                loadGames();
+            }
+            
+            const user = getCurrentUser();
+            if (user && typeof loadUserScores === 'function') {
+                loadUserScores(user.user_id);
+            }
+        });
+
+        // Prevent arrow keys and space from scrolling
+        document.addEventListener('keydown', (e) => {
+            if(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
+                e.preventDefault();
+            }
+        });
+    </script>
+</body>
+</html>

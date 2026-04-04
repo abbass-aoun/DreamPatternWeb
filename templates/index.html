@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DreamFlow - Dream Pattern Analysis</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-brand">DreamFlow</div>
+            <ul class="navbar-nav">
+                <li><a href="/login">Login</a></li>
+                <li><a href="/register">Sign Up</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <h1>Unlock the Secrets of Your Dreams</h1>
+        <p class="text-muted">AI-powered dream analysis, pattern detection, and emotional insights.</p>
+        <div class="hero-buttons">
+            <a href="/register" class="btn btn-primary">Get Started</a>
+            <a href="/login" class="btn btn-secondary">Login</a>
+        </div>
+    </header>
+
+    <section class="container" style="padding: 3rem 2rem;">
+        <div class="grid grid-3">
+            <div class="card text-center">
+                <div style="font-size: 3rem; color: var(--primary);">🌙</div>
+                <h3>Track Your Dreams</h3>
+                <p class="text-muted">Record your nightly experiences and build your dream journal.</p>
+            </div>
+
+            <div class="card text-center">
+                <div style="font-size: 3rem; color: var(--secondary);">🤖</div>
+                <h3>AI Interpretation</h3>
+                <p class="text-muted">Get deep psychological insights from advanced AI models.</p>
+            </div>
+
+            <div class="card text-center">
+                <div style="font-size: 3rem; color: var(--info);">📊</div>
+                <h3>Patterns & Themes</h3>
+                <p class="text-muted">Discover recurring symbols, emotions, and subconscious trends.</p>
+            </div>
+        </div>
+    </section>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

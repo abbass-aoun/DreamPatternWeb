@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Dream Pattern Analysis</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-brand">DreamFlow</div>
+            <ul class="navbar-nav">
+                <li><a href="/dashboard">Dashboard</a></li>
+                <li><a href="/add-dream">Add Dream</a></li>
+                <li><a href="/games">Games</a></li>
+                <li><a href="/timeline">Timeline</a></li>
+                <li><a href="/search">Search</a></li>
+                <li><a href="/analytics">Analytics</a></li>
+                <li><a href="/chat">AI Analysis</a></li>
+                <li><a href="#" onclick="logout()">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div id="dashboardContent">
+        <div class="dashboard-header">
+            <div class="container">
+                <h1>Welcome, <span id="userName"></span>!</h1>
+                <p class="text-muted">Track your dreams, discover patterns, unlock insights</p>
+            </div>
+        </div>
+
+        <div class="container">
+            <!-- Game Stats (XP, Level, Coins, Streak) -->
+            <div id="gameStats"></div>
+            
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalDreams">0</div>
+                    <div class="stat-label">Total Dreams</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="lucidDreams">0</div>
+                    <div class="stat-label">Lucid Dreams</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="avgIntensity">0</div>
+                    <div class="stat-label">Avg Intensity</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="lucidPercentage">0%</div>
+                    <div class="stat-label">Lucid Rate</div>
+                </div>
+            </div>
+
+            <!-- Recent Dreams -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Recent Dreams</h3>
+                    <p class="card-subtitle">Your latest dream entries</p>
+                </div>
+                <div id="recentDreams">
+                    <p class="text-muted">Loading dreams...</p>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="grid grid-3 mt-3">
+                <div class="card">
+                    <h3>Record a New Dream</h3>
+                    <p class="text-muted mb-2">Capture your latest dream experience</p>
+                    <a href="/add-dream" class="btn btn-primary">Add Dream</a>
+                </div>
+                
+                <div class="card">
+                    <h3>AI Dream Analysis</h3>
+                    <p class="text-muted mb-2">Get insights from our AI chatbot</p>
+                    <a href="/chat" class="btn btn-primary">Start Chat</a>
+                </div>
+                
+                <div class="card">
+                    <h3>Timeline</h3>
+                    <p class="text-muted mb-2">View your dreams in chronological order</p>
+                    <a href="/timeline" class="btn btn-primary">View Timeline</a>
+                </div>
+            </div>
+
+            <!-- Game Features -->
+            <div class="grid grid-3 mt-3">
+                <div class="card">
+                    <h3>🎮 Games</h3>
+                    <p class="text-muted mb-2">Play Flappy Bird </p>
+                    <a href="/games" class="btn btn-primary">Play Now</a>
+                </div>
+                
+                <div class="card">
+                    <h3>Search Dreams</h3>
+                    <p class="text-muted mb-2">Search through your dream journal</p>
+                    <a href="/search" class="btn btn-primary">Search</a>
+                </div>
+                
+                <div class="card">
+                    <h3>AI Analysis</h3>
+                    <p class="text-muted mb-2">Get AI-powered dream insights</p>
+                    <a href="/chat" class="btn btn-primary">Analyze</a>
+                </div>
+            </div>
+            
+            <!-- More Features -->
+            <div class="grid grid-2 mt-3">
+                <div class="card">
+                    <h3>Achievements</h3>
+                    <p class="text-muted mb-2">View your progress and unlock badges</p>
+                    <a href="/achievements" class="btn btn-primary">View Achievements</a>
+                </div>
+                
+                <div class="card">
+                    <h3>Dream Shop</h3>
+                    <p class="text-muted mb-2">Spend your Dream Coins</p>
+                    <a href="/shop" class="btn btn-primary">Visit Shop</a>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+    <script src="/static/js/game.js"></script>
+    <script>
+        // Initialize dashboard on load
+        document.addEventListener('DOMContentLoaded', async () => {
+            const user = checkAuth();
+            if (!user) return;
+
+            // Display username
+            document.getElementById('userName').textContent = user.username;
+
+            // Load statistics
+            await loadUserStats(user.user_id);
+
+            // Load recent dreams
+            await loadRecentDreams(user.user_id);
+
+            // Load game stats
+            await loadGameStats(user.user_id);
+        });
+
+        // Override loadRecentDreams with simplified version (only View Details button)
+        async function loadRecentDreams(userId) {
+            try {
+                const response = await fetch(`${API_BASE}/dreams/user/${userId}`);
+                const dreams = await response.json();
+
+                const container = document.getElementById('recentDreams');
+
+                if (response.ok && dreams.length > 0) {
+                    container.innerHTML = dreams.slice(0, 5).map(dream => `
+                        <div class="dream-item" style="padding: 1.5rem; border-bottom: 1px solid var(--border);">
+                            <div style="display: flex; justify-content: space-between; align-items: start; gap: 1rem;">
+                                <div style="flex: 1;">
+                                    <h4 style="margin: 0 0 0.5rem 0;">${dream.dname}</h4>
+                                    <p class="text-muted" style="margin: 0 0 1rem 0; font-size: 0.875rem;">
+                                        ${dream.description.substring(0, 150)}${dream.description.length > 150 ? '...' : ''}
+                                    </p>
+                                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;">
+                                        <span class="badge" style="background: var(--primary); color: white; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.75rem;">
+                                            Intensity: ${dream.intensity}/10
+                                        </span>
+                                        ${dream.lucid ? '<span class="badge" style="background: var(--success); color: white; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.75rem;">Lucid</span>' : ''}
+                                        <span class="badge" style="background: var(--bg-darker); color: var(--text-muted); padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.75rem;">
+                                            ${new Date(dream.dream_date).toLocaleDateString()}
+                                        </span>
+                                    </div>
+                                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                        <button onclick="viewDreamDetail(${dream.dream_id})" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.875rem;">
+                                            View Details
+                                        </button>
+                                        <button onclick="deleteDream(${dream.dream_id})" class="btn btn-danger" style="padding: 0.5rem 1rem; font-size: 0.875rem;">
+                                            Delete
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    container.innerHTML = '<p class="text-muted" style="padding: 2rem; text-align: center;">No dreams recorded yet. Start by adding your first dream!</p>';
+                }
+            } catch (error) {
+                console.error('Dreams error:', error);
+                document.getElementById('recentDreams').innerHTML = '<p class="text-muted">Error loading dreams.</p>';
+            }
+        }
+
+        // View dream details page
+        function viewDreamDetail(dreamId) {
+            window.location.href = `/dream-detail?id=${dreamId}`;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dream Search - DreamFlow</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .search-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        .search-header {
+            margin-bottom: 2rem;
+        }
+        .search-box {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .search-box input {
+            flex: 1;
+            padding: 0.75rem;
+            background: var(--bg-darker);
+            border: 2px solid var(--border);
+            border-radius: 0.5rem;
+            color: var(--text);
+            font-size: 1rem;
+        }
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        .filters-panel {
+            background: var(--bg-card);
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+        }
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .filter-group label {
+            color: var(--text-main);
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        .filter-group input,
+        .filter-group select {
+            background: var(--bg-darker);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+        }
+        .filter-group input:focus,
+        .filter-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        .filter-group option {
+            background: var(--bg-darker);
+            color: var(--text-main);
+        }
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+        .dream-card {
+            background: var(--bg-darker);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            transition: transform 0.2s;
+        }
+        .dream-card:hover {
+            transform: translateY(-2px);
+            background: var(--bg);
+        }
+        .dream-card h4 {
+            margin: 0 0 0.5rem 0;
+        }
+        .dream-card-meta {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+        .dream-card-description {
+            font-size: 0.875rem;
+            color: var(--text);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-brand">DreamFlow</div>
+            <ul class="navbar-nav">
+                <li><a href="/dashboard">Dashboard</a></li>
+                <li><a href="/timeline">Timeline</a></li>
+                <li><a href="/search">Search</a></li>
+                <li><a href="/achievements">Achievements</a></li>
+                <li><a href="#" onclick="logout()">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="search-container">
+        <div class="search-header">
+            <h1>Search Dreams</h1>
+            <p class="text-muted">Find your dreams by keywords, date, mood, and more</p>
+        </div>
+
+        <div class="search-box">
+            <input type="text" id="searchQuery" placeholder="Search by dream title or description..." onkeyup="handleSearch(event)">
+            <button class="btn btn-primary" onclick="performSearch()">Search</button>
+            <button class="btn btn-secondary" onclick="clearFilters()">Clear</button>
+        </div>
+
+        <div class="filters-panel">
+            <h3 style="margin-bottom: 1rem;">Filters</h3>
+            <div class="filters-grid">
+                <div class="filter-group">
+                    <label>Start Date</label>
+                    <input type="date" id="startDate">
+                </div>
+                <div class="filter-group">
+                    <label>End Date</label>
+                    <input type="date" id="endDate">
+                </div>
+                <div class="filter-group">
+                    <label>Lucid Dream</label>
+                    <select id="lucidFilter">
+                        <option value="">All</option>
+                        <option value="true">Lucid Only</option>
+                        <option value="false">Non-Lucid Only</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Min Intensity</label>
+                    <input type="number" id="minIntensity" min="1" max="10">
+                </div>
+                <div class="filter-group">
+                    <label>Max Intensity</label>
+                    <input type="number" id="maxIntensity" min="1" max="10">
+                </div>
+                <div class="filter-group">
+                    <label>Emotion</label>
+                    <select id="emotionFilter"></select>
+                </div>
+                <div class="filter-group">
+                    <label>Theme</label>
+                    <select id="themeFilter"></select>
+                </div>
+                <div class="filter-group">
+                    <label>Category</label>
+                    <select id="categoryFilter"></select>
+                </div>
+            </div>
+        </div>
+
+        <div class="results-header">
+            <h3>Results: <span id="resultsCount">0</span> dreams found</h3>
+        </div>
+
+        <div class="results-grid" id="resultsGrid">
+            <p class="text-muted text-center">Enter a search query or use filters to find your dreams</p>
+        </div>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+    <script src="/static/js/search.js"></script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
