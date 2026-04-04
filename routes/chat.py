@@ -1,3 +1,4 @@
+import os
 from flask import Blueprint, request, jsonify
 from database.db import get_db_connection
 from datetime import datetime
@@ -6,7 +7,7 @@ import requests
 chat_bp = Blueprint('chat', __name__)
 
 # ------------------ OpenAI Config ------------------
-OPENAI_API_KEY = "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"
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 MODEL = "gpt-5-nano"
 
 # Set to True to use mock responses (for testing without API)
