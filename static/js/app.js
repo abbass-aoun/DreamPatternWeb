@@ -11,6 +11,19 @@ function showAlert(message, type = 'info') {
     alert(message);
 }
 
+/** Avoid false "Network error" when the server returns HTML (e.g. 502) instead of JSON. */
+async function readApiJson(response) {
+    const text = await response.text();
+    if (!text) return {};
+    try {
+        return JSON.parse(text);
+    } catch {
+        return {
+            error: `Server returned ${response.status} (not JSON). Check Railway logs and redeploy.`,
+        };
+    }
+}
+
 function getCurrentUser() {
     const userStr = localStorage.getItem('currentUser');
     return userStr ? JSON.parse(userStr) : null;
@@ -63,7 +76,7 @@ if (document.getElementById('registerForm')) {
                 body: JSON.stringify({ username, email, password, birthdate })
             });
 
-            const data = await response.json();
+            const data = await readApiJson(response);
 
             if (response.ok) {
                 showAlert(`Registration successful! ${data.message}`, 'success');
@@ -95,7 +108,7 @@ if (document.getElementById('loginForm')) {
                 body: JSON.stringify({ email, password })
             });
 
-            const data = await response.json();
+            const data = await readApiJson(response);
 
             if (response.ok) {
                 // Store user data in localStorage

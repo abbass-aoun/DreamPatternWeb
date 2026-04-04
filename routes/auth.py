@@ -14,7 +14,9 @@ def hash_password(password):
 @auth_bp.route('/api/register', methods=['POST'])
 def register():
     """Register new user with FREE TRIAL subscription - TRANSACTION"""
-    data = request.json
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({"error": "Expected JSON body"}), 400
     username = data.get('username')
     email = data.get('email')
     password = data.get('password')
@@ -91,7 +93,9 @@ def register():
 @auth_bp.route('/api/login', methods=['POST'])
 def login():
     """User login"""
-    data = request.json
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({"error": "Expected JSON body"}), 400
     email = data.get('email')
     password = data.get('password')
 
