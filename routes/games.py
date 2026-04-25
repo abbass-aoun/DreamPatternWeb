@@ -80,13 +80,13 @@ def submit_score():
 
         # Get user's rank for this game
         cursor.execute(
-            """SELECT COUNT(*) + 1 as rank
+            """SELECT COUNT(*) + 1 as player_rank
                FROM GAME_SCORE
                WHERE game_id = %s AND (score > %s OR (score = %s AND created_at < (SELECT created_at FROM GAME_SCORE WHERE score_id = %s)))""",
             (game_id, score, score, score_id)
         )
         rank_result = cursor.fetchone()
-        rank = rank_result['rank'] if rank_result else 1
+        rank = rank_result['player_rank'] if rank_result else 1
 
         # Check if this is a personal best
         cursor.execute(
@@ -382,7 +382,7 @@ def get_user_rank(user_id, game_name):
 
         # Get user's rank
         cursor.execute(
-            """SELECT COUNT(*) + 1 as rank
+            """SELECT COUNT(*) + 1 as player_rank
                FROM GAME_SCORE
                WHERE game_id = %s AND (score > %s OR (score = %s AND created_at < (
                    SELECT MIN(created_at) FROM GAME_SCORE 
@@ -394,7 +394,7 @@ def get_user_rank(user_id, game_name):
 
         return jsonify({
             "has_played": True,
-            "rank": rank_result['rank'] if rank_result else 1,
+            "rank": rank_result['player_rank'] if rank_result else 1,
             "best_score": user_stats['best_score'],
             "best_level": user_stats['best_level'],
             "total_plays": user_stats['total_plays']

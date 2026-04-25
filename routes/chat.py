@@ -49,6 +49,9 @@ def chat_with_openai(prompt):
         print("[MOCK] Using mock AI response")
         return f"This is a mock AI response analyzing your dream. In production, this would be a real AI analysis from OpenAI. Dream analysis based on: {prompt[:100]}..."
 
+    if not OPENAI_API_KEY:
+        raise RuntimeError("OpenAI key is missing on server. Set OPENAI_API_KEY in Railway Variables.")
+
     url = "https://api.openai.com/v1/responses"
     headers = {
         "Authorization": f"Bearer {OPENAI_API_KEY}",
@@ -78,14 +81,20 @@ def chat_with_openai(prompt):
 
     except requests.exceptions.Timeout:
         print("OpenAI API Timeout")
-        return "The AI is taking longer than usual. The dream analysis has been saved, but the interpretation is taking time to generate. Please try again in a moment."
+        raise RuntimeError("OpenAI timeout. Please try again.")
     except requests.exceptions.HTTPError as e:
-        print(f"OpenAI API Error: {e}")
-        print(f"Response: {e.response.text if hasattr(e, 'response') else 'No response'}")
-        return "AI service temporarily unavailable. Please try again later."
+        status_code = e.response.status_code if hasattr(e, "response") and e.response is not None else None
+        response_text = e.response.text if hasattr(e, "response") and e.response is not None else "No response"
+        print(f"OpenAI API Error ({status_code}): {response_text}")
+
+        if status_code == 401:
+            raise RuntimeError("OpenAI key is invalid or expired. Update OPENAI_API_KEY in Railway.")
+        if status_code == 429:
+            raise RuntimeError("OpenAI rate limit or quota exceeded. Check billing/usage.")
+        raise RuntimeError("OpenAI service is unavailable right now.")
     except Exception as e:
         print(f"Unexpected error: {e}")
-        return "An error occurred while generating the analysis. Please try again."
+        raise RuntimeError("An unexpected AI error occurred.")
 
 
 def analyze_dream_with_ai(dream_text):
@@ -135,7 +144,10 @@ def chat():
     try:
         # Get AI response from OpenAI
         print(f"[CHAT] User {user_id}: {message[:50]}...")
-        reply = analyze_dream_with_ai(message)
+        try:
+            reply = analyze_dream_with_ai(message)
+        except RuntimeError as ai_error:
+            return jsonify({"error": str(ai_error), "ai_unavailable": True}), 503
         print(f"[CHAT] Bot replied: {reply[:50]}...")
 
         # Save general chat session (not linked to specific dream)
@@ -215,7 +227,10 @@ def analyze_specific_dream(dream_id):
         # Get AI analysis
         print(f"[ANALYZE] Analyzing dream {dream_id} for user {user_id}...")
         print(f"[ANALYZE] Prompt length: {len(analysis_prompt)} chars")
-        interpretation = analyze_dream_with_ai(analysis_prompt)
+        try:
+            interpretation = analyze_dream_with_ai(analysis_prompt)
+        except RuntimeError as ai_error:
+            return jsonify({"error": str(ai_error), "ai_unavailable": True}), 503
         print(f"[ANALYZE] Analysis complete: {interpretation[:50]}...")
 
         # Save analysis to DREAM_ANALYSIS table (linked to dream_id)
