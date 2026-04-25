@@ -113,76 +113,8 @@ def get_xp_history(user_id):
 
 @game_bp.route('/api/game/achievements/<int:user_id>', methods=['GET'])
 def get_user_achievements(user_id):
-    """Get all achievements with user progress"""
-    conn = get_db_connection()
-    if not conn:
-        return jsonify({"error": "Database connection failed"}), 500
-
-    cursor = conn.cursor(dictionary=True)
-    try:
-        # Get all achievements
-        cursor.execute("SELECT * FROM ACHIEVEMENT ORDER BY achievement_id")
-        all_achievements = cursor.fetchall()
-
-        # Get user's earned achievements
-        cursor.execute(
-            """SELECT achievement_id FROM USER_ACHIEVEMENT WHERE user_id = %s""",
-            (user_id,)
-        )
-        earned_ids = {row['achievement_id'] for row in cursor.fetchall()}
-
-        # Get user stats for progress calculation
-        cursor.execute("SELECT COUNT(*) as dream_count FROM DREAM WHERE user_id = %s", (user_id,))
-        dream_count = cursor.fetchone()['dream_count']
-        
-        cursor.execute("SELECT COUNT(*) as lucid_count FROM DREAM WHERE user_id = %s AND lucid = TRUE", (user_id,))
-        lucid_count = cursor.fetchone()['lucid_count']
-
-        cursor.execute("SELECT MAX(intensity) as max_intensity FROM DREAM WHERE user_id = %s", (user_id,))
-        max_intensity = cursor.fetchone()['max_intensity'] or 0
-
-        cursor.execute("SELECT current_streak FROM DREAM_STREAK WHERE user_id = %s", (user_id,))
-        streak_data = cursor.fetchone()
-        current_streak = streak_data['current_streak'] if streak_data else 0
-
-        # Check for early bird (dreams recorded before 7 AM)
-        cursor.execute(
-            """SELECT COUNT(*) as early_count 
-               FROM DREAM 
-               WHERE user_id = %s 
-               AND HOUR(created_at) < 7""",
-            (user_id,)
-        )
-        early_bird_count = cursor.fetchone()['early_count']
-
-        # Calculate progress for each achievement
-        for achievement in all_achievements:
-            achievement['earned'] = achievement['achievement_id'] in earned_ids
-            progress = 0
-            
-            if achievement['requirement_type'] == 'DREAM_COUNT':
-                progress = min(100, (dream_count / achievement['requirement_value']) * 100)
-            elif achievement['requirement_type'] == 'LUCID_COUNT':
-                progress = min(100, (lucid_count / achievement['requirement_value']) * 100)
-            elif achievement['requirement_type'] == 'STREAK':
-                progress = min(100, (current_streak / achievement['requirement_value']) * 100)
-            elif achievement['requirement_type'] == 'INTENSITY':
-                progress = 100 if max_intensity >= achievement['requirement_value'] else 0
-            elif achievement['requirement_type'] == 'TIME':
-                progress = 100 if early_bird_count >= achievement['requirement_value'] else 0
-            
-            achievement['progress'] = round(progress, 1)
-
-        return jsonify({
-            "achievements": all_achievements,
-            "total_earned": sum(1 for a in all_achievements if a['earned'])
-        }), 200
-
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-    finally:
-        cursor.close()
-        conn.close()
+    """Achievements are intentionally disabled."""
+    return jsonify({"error": "Achievements are no longer available"}), 404
 
 
 def check_and_award_achievements(user_id):
@@ -381,9 +313,6 @@ def record_reality_check():
 
         conn.commit()
 
-        # Check achievements
-        check_and_award_achievements(user_id)
-
         return jsonify({
             "message": "Reality check recorded! +5 XP, +1 Coin",
             "check_id": check_id,
@@ -435,142 +364,20 @@ def get_reality_checks(user_id):
 
 @game_bp.route('/api/game/shop', methods=['GET'])
 def get_shop_items():
-    """Get all shop items"""
-    conn = get_db_connection()
-    if not conn:
-        return jsonify({"error": "Database connection failed"}), 500
-
-    cursor = conn.cursor(dictionary=True)
-    try:
-        cursor.execute(
-            """SELECT * FROM DREAM_SHOP 
-               WHERE is_active = TRUE 
-               ORDER BY coin_cost ASC"""
-        )
-        items = cursor.fetchall()
-
-        return jsonify({"items": items}), 200
-
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-    finally:
-        cursor.close()
-        conn.close()
+    """Shop is intentionally disabled."""
+    return jsonify({"error": "Dream shop is no longer available"}), 404
 
 
 @game_bp.route('/api/game/shop/purchase', methods=['POST'])
 def purchase_shop_item():
-    """Purchase an item from the shop"""
-    data = request.json
-    user_id = data.get('user_id')
-    item_id = data.get('item_id')
-
-    if not user_id or not item_id:
-        return jsonify({"error": "Missing user_id or item_id"}), 400
-
-    conn = get_db_connection()
-    if not conn:
-        return jsonify({"error": "Database connection failed"}), 500
-
-    cursor = conn.cursor(dictionary=True)
-    try:
-        conn.start_transaction()
-
-        # Get item details
-        cursor.execute(
-            "SELECT * FROM DREAM_SHOP WHERE item_id = %s AND is_active = TRUE",
-            (item_id,)
-        )
-        item = cursor.fetchone()
-
-        if not item:
-            conn.rollback()
-            return jsonify({"error": "Item not found or not available"}), 404
-
-        # Check if already purchased
-        cursor.execute(
-            "SELECT purchase_id FROM USER_SHOP_PURCHASE WHERE user_id = %s AND item_id = %s",
-            (user_id, item_id)
-        )
-        if cursor.fetchone():
-            conn.rollback()
-            return jsonify({"error": "Item already purchased"}), 400
-
-        # Check user has enough coins
-        cursor.execute(
-            "SELECT dream_coins FROM USER_GAME_STATS WHERE user_id = %s",
-            (user_id,)
-        )
-        user_stats = cursor.fetchone()
-        if not user_stats or user_stats['dream_coins'] < item['coin_cost']:
-            conn.rollback()
-            return jsonify({"error": "Insufficient coins"}), 400
-
-        # Deduct coins
-        cursor.execute(
-            """UPDATE USER_GAME_STATS 
-               SET dream_coins = dream_coins - %s 
-               WHERE user_id = %s""",
-            (item['coin_cost'], user_id)
-        )
-
-        # Record purchase
-        cursor.execute(
-            """INSERT INTO COIN_TRANSACTION 
-               (user_id, coin_amount, transaction_type, source_id, description)
-               VALUES (%s, %s, 'SPENT', %s, %s)""",
-            (user_id, -item['coin_cost'], item_id, f"Purchased: {item['item_name']}")
-        )
-
-        # Record purchase
-        cursor.execute(
-            """INSERT INTO USER_SHOP_PURCHASE (user_id, item_id) 
-               VALUES (%s, %s)""",
-            (user_id, item_id)
-        )
-
-        conn.commit()
-
-        return jsonify({
-            "message": f"Successfully purchased {item['item_name']}!",
-            "item": item,
-            "remaining_coins": user_stats['dream_coins'] - item['coin_cost']
-        }), 200
-
-    except Exception as e:
-        conn.rollback()
-        return jsonify({"error": str(e)}), 500
-    finally:
-        cursor.close()
-        conn.close()
+    """Shop is intentionally disabled."""
+    return jsonify({"error": "Dream shop is no longer available"}), 404
 
 
 @game_bp.route('/api/game/shop/purchases/<int:user_id>', methods=['GET'])
 def get_user_purchases(user_id):
-    """Get user's purchased items"""
-    conn = get_db_connection()
-    if not conn:
-        return jsonify({"error": "Database connection failed"}), 500
-
-    cursor = conn.cursor(dictionary=True)
-    try:
-        cursor.execute(
-            """SELECT s.*, p.purchased_at 
-               FROM DREAM_SHOP s
-               INNER JOIN USER_SHOP_PURCHASE p ON s.item_id = p.item_id
-               WHERE p.user_id = %s
-               ORDER BY p.purchased_at DESC""",
-            (user_id,)
-        )
-        purchases = cursor.fetchall()
-
-        return jsonify({"purchases": purchases}), 200
-
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-    finally:
-        cursor.close()
-        conn.close()
+    """Shop is intentionally disabled."""
+    return jsonify({"error": "Dream shop is no longer available"}), 404
 
 
 # ========================================

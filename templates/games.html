@@ -244,8 +244,8 @@
             <ul class="navbar-nav">
                 <li><a href="/dashboard">Dashboard</a></li>
                 <li><a href="/games" class="active">Games</a></li>
-                <li><a href="/achievements">Achievements</a></li>
-                <li><a href="/shop">Shop</a></li>
+                <li><a href="/timeline">Timeline</a></li>
+                <li><a href="/search">Search</a></li>
                 <li><a href="#" onclick="logout()">Logout</a></li>
             </ul>
         </div>
@@ -272,7 +272,10 @@
         <div id="gameView" style="display: none;">
             <div class="game-header">
                 <button class="btn btn-secondary" onclick="showGamesList()">← Back to Games</button>
-                <button class="btn btn-primary" onclick="showLeaderboard(currentGame)">View Leaderboard</button>
+                <div style="display:flex; gap:0.75rem;">
+                    <button class="btn btn-primary" onclick="showLeaderboard(currentGame)">Game Leaderboard</button>
+                    <button class="btn btn-secondary" onclick="showGlobalLeaderboard()">Global Leaderboard</button>
+                </div>
             </div>
 
             <!-- Flappy Bird Game -->

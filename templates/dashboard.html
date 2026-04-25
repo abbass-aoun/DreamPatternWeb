@@ -111,15 +111,15 @@
             <!-- More Features -->
             <div class="grid grid-2 mt-3">
                 <div class="card">
-                    <h3>Achievements</h3>
-                    <p class="text-muted mb-2">View your progress and unlock badges</p>
-                    <a href="/achievements" class="btn btn-primary">View Achievements</a>
+                    <h3>Global Leaderboard</h3>
+                    <p class="text-muted mb-2">See top players across all games</p>
+                    <a href="/games" class="btn btn-primary">View Rankings</a>
                 </div>
                 
                 <div class="card">
-                    <h3>Dream Shop</h3>
-                    <p class="text-muted mb-2">Spend your Dream Coins</p>
-                    <a href="/shop" class="btn btn-primary">Visit Shop</a>
+                    <h3>Dream Timeline</h3>
+                    <p class="text-muted mb-2">Browse dream history on a calendar</p>
+                    <a href="/timeline" class="btn btn-primary">Open Timeline</a>
                 </div>
             </div>
             
@@ -127,7 +127,7 @@
     </div>
 
     <script src="/static/js/app.js"></script>
-    <script src="/static/js/game.js"></script>
+    <script src="/static/js/games.js"></script>
     <script>
         // Initialize dashboard on load
         document.addEventListener('DOMContentLoaded', async () => {
@@ -144,7 +144,9 @@
             await loadRecentDreams(user.user_id);
 
             // Load game stats
-            await loadGameStats(user.user_id);
+            if (typeof loadGameStats === 'function') {
+                await loadGameStats(user.user_id);
+            }
         });
 
         // Override loadRecentDreams with simplified version (only View Details button)

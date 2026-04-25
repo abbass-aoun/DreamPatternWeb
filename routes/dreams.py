@@ -58,13 +58,6 @@ def create_dream():
 
         conn.commit()
 
-        # Check and award achievements (game system)
-        try:
-            from routes.game import check_and_award_achievements
-            check_and_award_achievements(user_id)
-        except Exception as e:
-            print(f"Achievement check error: {e}")
-
         return jsonify({
             "message": "Dream created successfully",
             "dream_id": dream_id

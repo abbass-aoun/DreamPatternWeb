@@ -39,7 +39,7 @@ def get_games():
 @games_bp.route('/api/games/submit-score', methods=['POST'])
 def submit_score():
     """Submit a game score"""
-    data = request.json
+    data = request.get_json(silent=True) or {}
     user_id = data.get('user_id')
     game_name = data.get('game_name')
     score = data.get('score', 0)
@@ -208,22 +208,30 @@ def get_leaderboard(game_name):
 
         game_id = game['game_id']
 
-        # Get best score per user - simpler and more reliable query
+        # Strict-mode-safe ranking: pick one best row per user, then rank globally.
         cursor.execute(
-            """SELECT 
-                gs.score_id,
-                gs.user_id,
-                u.username,
-                MAX(gs.score) as score,
-                MAX(gs.level) as level,
-                MAX(gs.time_played) as time_played,
-                MAX(gs.created_at) as created_at
-            FROM GAME_SCORE gs
-            JOIN USER u ON gs.user_id = u.user_id
-            WHERE gs.game_id = %s
-            GROUP BY gs.user_id, u.username
-            ORDER BY score DESC, created_at ASC
-            LIMIT %s""",
+            """WITH ranked_user_scores AS (
+                   SELECT
+                       gs.score_id,
+                       gs.user_id,
+                       u.username,
+                       gs.score,
+                       gs.level,
+                       gs.time_played,
+                       gs.created_at,
+                       ROW_NUMBER() OVER (
+                           PARTITION BY gs.user_id
+                           ORDER BY gs.score DESC, gs.created_at ASC
+                       ) AS rn
+                   FROM GAME_SCORE gs
+                   JOIN USER u ON gs.user_id = u.user_id
+                   WHERE gs.game_id = %s
+               )
+               SELECT score_id, user_id, username, score, level, time_played, created_at
+               FROM ranked_user_scores
+               WHERE rn = 1
+               ORDER BY score DESC, created_at ASC
+               LIMIT %s""",
             (game_id, limit)
         )
         leaderboard = cursor.fetchall()
@@ -244,6 +252,57 @@ def get_leaderboard(game_name):
 
     except Exception as e:
         print(f"Leaderboard error: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+@games_bp.route('/api/games/global-leaderboard', methods=['GET'])
+def get_global_leaderboard():
+    """Get global leaderboard aggregated across all active games."""
+    limit = request.args.get('limit', 100, type=int)
+
+    conn = get_db_connection()
+    if not conn:
+        return jsonify({"error": "Database connection failed"}), 500
+
+    cursor = conn.cursor(dictionary=True)
+    try:
+        cursor.execute(
+            """WITH per_game_bests AS (
+                   SELECT
+                       gs.user_id,
+                       gs.game_id,
+                       MAX(gs.score) AS best_score
+                   FROM GAME_SCORE gs
+                   JOIN GAME g ON gs.game_id = g.game_id
+                   WHERE g.is_active = TRUE
+                   GROUP BY gs.user_id, gs.game_id
+               )
+               SELECT
+                   u.user_id,
+                   u.username,
+                   COALESCE(SUM(pgb.best_score), 0) AS total_score,
+                   COUNT(pgb.game_id) AS games_played
+               FROM USER u
+               LEFT JOIN per_game_bests pgb ON u.user_id = pgb.user_id
+               GROUP BY u.user_id, u.username
+               HAVING total_score > 0
+               ORDER BY total_score DESC, games_played DESC, u.username ASC
+               LIMIT %s""",
+            (limit,)
+        )
+        leaderboard = cursor.fetchall()
+
+        for index, entry in enumerate(leaderboard):
+            entry["rank"] = index + 1
+
+        return jsonify({
+            "game_name": "Global",
+            "leaderboard": leaderboard,
+            "total_players": len(leaderboard)
+        }), 200
+    except Exception as e:
         return jsonify({"error": str(e)}), 500
     finally:
         cursor.close()

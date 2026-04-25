@@ -61,14 +61,6 @@ def subscription():
 def dream_detail():
     return render_template('dream_detail.html')
 
-@app.route("/achievements")
-def achievements():
-    return render_template('achievements.html')
-
-@app.route("/shop")
-def shop():
-    return render_template('shop.html')
-
 @app.route("/minigame")
 def minigame():
     return render_template('minigame.html')
