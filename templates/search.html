@@ -5,118 +5,58 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dream Search - DreamFlow</title>
     <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
     <style>
-        .search-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem;
-        }
-        .search-header {
-            margin-bottom: 2rem;
-        }
-        .search-box {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-        .search-box input {
-            flex: 1;
-            padding: 0.75rem;
-            background: var(--bg-darker);
-            border: 2px solid var(--border);
-            border-radius: 0.5rem;
-            color: var(--text);
-            font-size: 1rem;
-        }
-        .search-box input:focus {
-            outline: none;
-            border-color: var(--primary);
-        }
-        .filters-panel {
-            background: var(--bg-card);
-            padding: 1.5rem;
-            border-radius: 0.5rem;
-            margin-bottom: 2rem;
-            border: 1px solid var(--border);
-        }
-        .filters-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-        }
-        .filter-group {
-            display: flex;
-            flex-direction: column;
-        }
-        .filter-group label {
-            color: var(--text-main);
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-        }
-        .filter-group input,
-        .filter-group select {
-            background: var(--bg-darker);
-            border: 1px solid var(--border);
-            color: var(--text-main);
-            padding: 0.5rem;
-            border-radius: 0.25rem;
-        }
-        .filter-group input:focus,
-        .filter-group select:focus {
-            outline: none;
-            border-color: var(--primary);
-        }
-        .filter-group option {
-            background: var(--bg-darker);
-            color: var(--text-main);
-        }
-        .results-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-        .results-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 1rem;
-        }
-        .dream-card {
-            background: var(--bg-darker);
-            padding: 1rem;
-            border-radius: 0.5rem;
-            transition: transform 0.2s;
-        }
-        .dream-card:hover {
-            transform: translateY(-2px);
-            background: var(--bg);
-        }
-        .dream-card h4 {
-            margin: 0 0 0.5rem 0;
-        }
-        .dream-card-meta {
-            display: flex;
-            gap: 1rem;
-            font-size: 0.875rem;
-            color: var(--text-muted);
-            margin-bottom: 0.5rem;
-        }
-        .dream-card-description {
-            font-size: 0.875rem;
-            color: var(--text);
-            overflow: hidden;
-            text-overflow: ellipsis;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            line-clamp: 2;
-            -webkit-box-orient: vertical;
-        }
+        body { font-family: 'DM Sans', sans-serif; background: #080b14; overflow-x: hidden; }
+        #starfield { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+        .orb { position: fixed; border-radius: 50%; filter: blur(120px); opacity: 0.15; pointer-events: none; z-index: 0; animation: drift 20s ease-in-out infinite alternate; }
+        .orb-1 { width: 600px; height: 600px; background: #6366f1; top: -200px; left: -150px; }
+        .orb-2 { width: 400px; height: 400px; background: #f472b6; bottom: -100px; right: -80px; animation-delay: -8s; }
+        @keyframes drift { from { transform: translate(0,0); } to { transform: translate(30px,25px); } }
+        .navbar { background: rgba(8,11,20,0.75); border-bottom: 1px solid rgba(99,102,241,0.12); position: relative; z-index: 100; }
+        .navbar-brand { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.35rem; }
+        .navbar-nav a { font-family: 'DM Sans', sans-serif; font-size: 0.875rem; }
+        .btn { font-family: 'DM Sans', sans-serif; font-size: 0.82rem; font-weight: 500; border-radius: 0.6rem; }
+
+        .page-wrap { position: relative; z-index: 2; max-width: 1100px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
+        .page-header { margin-bottom: 2rem; }
+        .page-header h1 { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800; color: #e2e8f0; margin-bottom: 0.3rem; }
+        .page-header p { font-size: 0.85rem; color: #475569; font-style: italic; }
+
+        .search-box { display: flex; gap: 0.75rem; margin-bottom: 1.5rem; }
+        .search-box input { flex: 1; padding: 0.75rem 1rem; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 0.75rem; color: #e2e8f0; font-family: 'DM Sans', sans-serif; font-size: 0.875rem; transition: border-color 0.2s; }
+        .search-box input:focus { outline: none; border-color: rgba(99,102,241,0.4); }
+        .search-box input::placeholder { color: #334155; }
+
+        .filters-panel { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 1.25rem; padding: 1.5rem; margin-bottom: 1.5rem; }
+        .filters-panel h3 { font-family: 'Syne', sans-serif; font-size: 0.85rem; font-weight: 700; color: #64748b; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 1rem; }
+        .filters-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.75rem; }
+        .filter-group { display: flex; flex-direction: column; }
+        .filter-group label { font-size: 0.72rem; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: #475569; margin-bottom: 0.35rem; }
+        .filter-group input, .filter-group select { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 0.6rem; color: #e2e8f0; padding: 0.5rem 0.75rem; font-family: 'DM Sans', sans-serif; font-size: 0.82rem; }
+        .filter-group input:focus, .filter-group select:focus { outline: none; border-color: rgba(99,102,241,0.35); }
+        .filter-group option { background: #0f172a; color: #e2e8f0; }
+
+        .results-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        .results-header h3 { font-family: 'Syne', sans-serif; font-size: 0.9rem; font-weight: 700; color: #64748b; }
+        .results-header span { color: #818cf8; }
+
+        .results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
+        .dream-card { background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.06); border-radius: 1.25rem; padding: 1.5rem; transition: transform 0.2s, border-color 0.2s; }
+        .dream-card:hover { transform: translateY(-3px); border-color: rgba(99,102,241,0.2); }
+        .dream-card h4 { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.95rem; color: #e2e8f0; margin: 0 0 0.5rem 0; }
+        .dream-card-meta { display: flex; gap: 0.75rem; font-size: 0.75rem; color: #475569; margin-bottom: 0.75rem; }
+        .dream-card-description { font-size: 0.82rem; color: #475569; line-height: 1.6; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; margin-bottom: 1rem; }
     </style>
 </head>
 <body>
+    <canvas id="starfield"></canvas>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+
     <nav class="navbar">
         <div class="container">
-            <div class="navbar-brand">DreamFlow</div>
+            <div class="navbar-brand">✦ DreamFlow</div>
             <ul class="navbar-nav">
                 <li><a href="/dashboard">Dashboard</a></li>
                 <li><a href="/timeline">Timeline</a></li>
@@ -127,10 +67,10 @@
         </div>
     </nav>
 
-    <div class="search-container">
-        <div class="search-header">
-            <h1>Search Dreams</h1>
-            <p class="text-muted">Find your dreams by keywords, date, mood, and more</p>
+    <div class="page-wrap">
+        <div class="page-header">
+            <h1>🔍 Search Dreams</h1>
+            <p>Find your dreams by keywords, date, mood, and more</p>
         </div>
 
         <div class="search-box">
@@ -140,16 +80,10 @@
         </div>
 
         <div class="filters-panel">
-            <h3 style="margin-bottom: 1rem;">Filters</h3>
+            <h3>Filters</h3>
             <div class="filters-grid">
-                <div class="filter-group">
-                    <label>Start Date</label>
-                    <input type="date" id="startDate">
-                </div>
-                <div class="filter-group">
-                    <label>End Date</label>
-                    <input type="date" id="endDate">
-                </div>
+                <div class="filter-group"><label>Start Date</label><input type="date" id="startDate"></div>
+                <div class="filter-group"><label>End Date</label><input type="date" id="endDate"></div>
                 <div class="filter-group">
                     <label>Lucid Dream</label>
                     <select id="lucidFilter">
@@ -158,26 +92,11 @@
                         <option value="false">Non-Lucid Only</option>
                     </select>
                 </div>
-                <div class="filter-group">
-                    <label>Min Intensity</label>
-                    <input type="number" id="minIntensity" min="1" max="10">
-                </div>
-                <div class="filter-group">
-                    <label>Max Intensity</label>
-                    <input type="number" id="maxIntensity" min="1" max="10">
-                </div>
-                <div class="filter-group">
-                    <label>Emotion</label>
-                    <select id="emotionFilter"></select>
-                </div>
-                <div class="filter-group">
-                    <label>Theme</label>
-                    <select id="themeFilter"></select>
-                </div>
-                <div class="filter-group">
-                    <label>Category</label>
-                    <select id="categoryFilter"></select>
-                </div>
+                <div class="filter-group"><label>Min Intensity</label><input type="number" id="minIntensity" min="1" max="10"></div>
+                <div class="filter-group"><label>Max Intensity</label><input type="number" id="maxIntensity" min="1" max="10"></div>
+                <div class="filter-group"><label>Emotion</label><select id="emotionFilter"></select></div>
+                <div class="filter-group"><label>Theme</label><select id="themeFilter"></select></div>
+                <div class="filter-group"><label>Category</label><select id="categoryFilter"></select></div>
             </div>
         </div>
 
@@ -186,31 +105,22 @@
         </div>
 
         <div class="results-grid" id="resultsGrid">
-            <p class="text-muted text-center">Enter a search query or use filters to find your dreams</p>
+            <p class="text-muted" style="font-size:0.85rem;">Enter a search query or use filters to find your dreams</p>
         </div>
     </div>
 
     <script src="/static/js/app.js"></script>
     <script src="/static/js/search.js"></script>
+    <script>
+        (function(){
+            const canvas = document.getElementById('starfield');
+            const ctx = canvas.getContext('2d');
+            let stars = [];
+            function resize(){ canvas.width=window.innerWidth; canvas.height=window.innerHeight; }
+            function init(){ resize(); stars=Array.from({length:100},()=>({x:Math.random()*canvas.width,y:Math.random()*canvas.height,r:Math.random()*1.2+0.2,o:Math.random()*0.5+0.1,s:Math.random()*0.003+0.001,d:Math.random()>0.5?1:-1})); }
+            function draw(){ ctx.clearRect(0,0,canvas.width,canvas.height); stars.forEach(s=>{ s.o+=s.s*s.d; if(s.o>0.6||s.o<0.1)s.d*=-1; ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2); ctx.fillStyle=`rgba(148,163,184,${s.o})`; ctx.fill(); }); requestAnimationFrame(draw); }
+            window.addEventListener('resize',init); init(); draw();
+        })();
+    </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

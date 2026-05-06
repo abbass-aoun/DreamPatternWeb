@@ -5,139 +5,71 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dream Timeline - DreamFlow</title>
     <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
     <style>
-        .calendar-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem;
-        }
+        body { font-family: 'DM Sans', sans-serif; background: #080b14; overflow-x: hidden; }
+        #starfield { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+        .orb { position: fixed; border-radius: 50%; filter: blur(120px); opacity: 0.15; pointer-events: none; z-index: 0; animation: drift 20s ease-in-out infinite alternate; }
+        .orb-1 { width: 600px; height: 600px; background: #6366f1; top: -200px; left: -150px; }
+        .orb-2 { width: 400px; height: 400px; background: #34d399; bottom: -100px; right: -80px; animation-delay: -8s; }
+        @keyframes drift { from { transform: translate(0,0); } to { transform: translate(30px,25px); } }
+        .navbar { background: rgba(8,11,20,0.75); border-bottom: 1px solid rgba(99,102,241,0.12); position: relative; z-index: 100; }
+        .navbar-brand { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.35rem; }
+        .navbar-nav a { font-family: 'DM Sans', sans-serif; font-size: 0.875rem; }
+        .btn { font-family: 'DM Sans', sans-serif; font-size: 0.82rem; font-weight: 500; border-radius: 0.6rem; }
+
+        .page-wrap { position: relative; z-index: 2; max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+
         .calendar-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-            padding: 1rem;
-            background: var(--bg-darker);
-            border-radius: 0.5rem;
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 1.5rem; padding: 1.25rem 1.5rem;
+            background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 1.25rem; backdrop-filter: blur(8px);
         }
-        .month-nav {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-        .month-nav button {
-            padding: 0.5rem 1rem;
-            background: var(--primary);
-            color: white;
-            border: none;
-            border-radius: 0.25rem;
-            cursor: pointer;
-        }
-        .month-nav button:hover {
-            background: var(--secondary);
-        }
-        .calendar-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 0.5rem;
-            margin-bottom: 2rem;
-        }
-        .calendar-day-header {
-            padding: 0.5rem;
-            text-align: center;
-            font-weight: bold;
-            color: var(--text-muted);
-        }
+        .month-nav { display: flex; align-items: center; gap: 1rem; }
+        .month-nav h2 { font-family: 'Syne', sans-serif; font-size: 1.2rem; font-weight: 800; color: #e2e8f0; min-width: 200px; text-align: center; }
+        .month-nav button { padding: 0.45rem 1rem; background: rgba(99,102,241,0.15); color: #818cf8; border: 1px solid rgba(99,102,241,0.25); border-radius: 0.6rem; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 0.82rem; font-weight: 500; transition: all 0.2s; }
+        .month-nav button:hover { background: rgba(99,102,241,0.25); }
+
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.4rem; margin-bottom: 1.5rem; }
+        .calendar-day-header { padding: 0.5rem; text-align: center; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #334155; }
         .calendar-day {
-            aspect-ratio: 1;
-            padding: 0.5rem;
-            background: var(--bg-darker);
-            border-radius: 0.25rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            position: relative;
-            min-height: 80px;
+            padding: 0.5rem; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04);
+            border-radius: 0.75rem; cursor: pointer; transition: all 0.2s; min-height: 72px;
         }
-        .calendar-day:hover {
-            background: var(--bg);
-            transform: scale(1.05);
-        }
-        .calendar-day.other-month {
-            opacity: 0.3;
-        }
-        .calendar-day.has-dreams {
-            border: 2px solid var(--primary);
-        }
-        .calendar-day.today {
-            background: rgba(138, 43, 226, 0.2);
-            border: 2px solid var(--primary);
-        }
-        .day-number {
-            font-weight: bold;
-            margin-bottom: 0.25rem;
-        }
-        .day-dreams {
-            font-size: 0.75rem;
-            display: flex;
-            flex-direction: column;
-            gap: 0.25rem;
-        }
-        .dream-indicator {
-            padding: 0.125rem 0.25rem;
-            border-radius: 0.125rem;
-            font-size: 0.7rem;
-        }
-        .dream-indicator.lucid {
-            background: rgba(255, 215, 0, 0.3);
-            color: #ffd700;
-        }
-        .dream-indicator.normal {
-            background: rgba(138, 43, 226, 0.3);
-            color: var(--primary);
-        }
-        .dream-detail-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.8);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-        }
-        .dream-detail-modal.active {
-            display: flex;
-        }
-        .dream-detail-content {
-            background: var(--bg);
-            padding: 2rem;
-            border-radius: 1rem;
-            max-width: 600px;
-            max-height: 80vh;
-            overflow-y: auto;
-        }
-        .dream-list {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-        .dream-item {
-            padding: 1rem;
-            background: var(--bg-darker);
-            border-radius: 0.5rem;
-            cursor: pointer;
-        }
-        .dream-item:hover {
-            background: var(--bg);
-        }
+        .calendar-day:hover { background: rgba(99,102,241,0.08); border-color: rgba(99,102,241,0.2); }
+        .calendar-day.other-month { opacity: 0.2; }
+        .calendar-day.has-dreams { border-color: rgba(99,102,241,0.3); background: rgba(99,102,241,0.05); }
+        .calendar-day.today { background: rgba(129,140,248,0.1); border-color: rgba(129,140,248,0.4); }
+        .day-number { font-family: 'Syne', sans-serif; font-size: 0.8rem; font-weight: 700; color: #64748b; margin-bottom: 0.25rem; }
+        .calendar-day.today .day-number { color: #818cf8; }
+        .day-dreams { display: flex; flex-direction: column; gap: 0.2rem; }
+        .dream-indicator { padding: 0.15rem 0.35rem; border-radius: 0.25rem; font-size: 0.62rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .dream-indicator.lucid { background: rgba(251,191,36,0.15); color: #fbbf24; }
+        .dream-indicator.normal { background: rgba(99,102,241,0.15); color: #818cf8; }
+
+        .legend-card { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 1rem; padding: 1.25rem 1.5rem; display: flex; gap: 2rem; align-items: center; flex-wrap: wrap; }
+        .legend-card span { font-size: 0.8rem; color: #475569; display: flex; align-items: center; gap: 0.4rem; }
+
+        /* Modal */
+        .dream-detail-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 1000; align-items: center; justify-content: center; padding: 1.5rem; backdrop-filter: blur(4px); }
+        .dream-detail-modal.active { display: flex; }
+        .dream-detail-content { background: #0f172a; border: 1px solid rgba(255,255,255,0.08); border-radius: 1.5rem; padding: 2rem; max-width: 560px; width: 100%; max-height: 80vh; overflow-y: auto; }
+        .dream-detail-content h2 { font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 800; color: #e2e8f0; margin-bottom: 1.25rem; }
+        .dream-item { padding: 1rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 0.75rem; cursor: pointer; margin-bottom: 0.75rem; transition: background 0.2s; }
+        .dream-item:hover { background: rgba(99,102,241,0.08); }
+        .dream-item h4 { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.9rem; color: #e2e8f0; margin: 0 0 0.4rem 0; }
+        .dream-item p { font-size: 0.78rem; color: #475569; margin: 0; }
     </style>
 </head>
 <body>
+    <canvas id="starfield"></canvas>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+
     <nav class="navbar">
         <div class="container">
-            <div class="navbar-brand">✨ DreamFlow</div>
+            <div class="navbar-brand">✦ DreamFlow</div>
             <ul class="navbar-nav">
                 <li><a href="/dashboard">Dashboard</a></li>
                 <li><a href="/timeline">Timeline</a></li>
@@ -148,7 +80,7 @@
         </div>
     </nav>
 
-    <div class="calendar-container">
+    <div class="page-wrap">
         <div class="calendar-header">
             <div class="month-nav">
                 <button onclick="changeMonth(-1)">← Prev</button>
@@ -158,49 +90,35 @@
             <button class="btn btn-primary" onclick="goToToday()">Today</button>
         </div>
 
-        <div class="calendar-grid" id="calendarGrid">
-            <!-- Calendar will be generated here -->
-        </div>
+        <div class="calendar-grid" id="calendarGrid"></div>
 
-        <div class="card">
-            <h3>Legend</h3>
-            <div style="display: flex; gap: 2rem; margin-top: 1rem;">
-                <div><span class="dream-indicator lucid">⭐</span> Lucid Dream</div>
-                <div><span class="dream-indicator normal">🌙</span> Regular Dream</div>
-            </div>
+        <div class="legend-card">
+            <span><span class="dream-indicator lucid" style="padding:0.2rem 0.5rem;">⭐</span> Lucid Dream</span>
+            <span><span class="dream-indicator normal" style="padding:0.2rem 0.5rem;">🌙</span> Regular Dream</span>
         </div>
     </div>
 
-    <!-- Dream Detail Modal -->
+    <!-- Modal -->
     <div class="dream-detail-modal" id="dreamModal">
         <div class="dream-detail-content">
             <h2 id="modalDate"></h2>
-            <div class="dream-list" id="modalDreams"></div>
-            <button class="btn btn-secondary" onclick="closeModal()" style="margin-top: 1rem;">Close</button>
+            <div id="modalDreams"></div>
+            <button class="btn btn-secondary" onclick="closeModal()" style="margin-top:0.75rem; width:100%;">Close</button>
         </div>
     </div>
 
     <script src="/static/js/app.js"></script>
     <script src="/static/js/timeline.js"></script>
+    <script>
+        (function(){
+            const canvas = document.getElementById('starfield');
+            const ctx = canvas.getContext('2d');
+            let stars = [];
+            function resize(){ canvas.width=window.innerWidth; canvas.height=window.innerHeight; }
+            function init(){ resize(); stars=Array.from({length:100},()=>({x:Math.random()*canvas.width,y:Math.random()*canvas.height,r:Math.random()*1.2+0.2,o:Math.random()*0.5+0.1,s:Math.random()*0.003+0.001,d:Math.random()>0.5?1:-1})); }
+            function draw(){ ctx.clearRect(0,0,canvas.width,canvas.height); stars.forEach(s=>{ s.o+=s.s*s.d; if(s.o>0.6||s.o<0.1)s.d*=-1; ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2); ctx.fillStyle=`rgba(148,163,184,${s.o})`; ctx.fill(); }); requestAnimationFrame(draw); }
+            window.addEventListener('resize',init); init(); draw();
+        })();
+    </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

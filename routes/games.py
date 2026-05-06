@@ -59,10 +59,17 @@ def submit_score():
 
     cursor = conn.cursor(dictionary=True)
     try:
+        # Lock the user_game_stats row first to prevent race conditions
+        cursor.execute(
+            """SELECT user_id FROM USER_GAME_STATS WHERE user_id = %s FOR UPDATE""",
+            (user_id,)
+        )
+        cursor.fetchall()  # consume the result to avoid "Unread result found"
+
         # Get game_id
         cursor.execute("SELECT game_id FROM GAME WHERE game_name = %s AND is_active = TRUE", (game_name,))
         game = cursor.fetchone()
-        
+
         if not game:
             return jsonify({"error": "Game not found"}), 404
 
@@ -119,20 +126,21 @@ def submit_score():
                 (user_id, coins_reward, f"Game reward: {game_name}")
             )
 
-            # Update user stats
+            # Upsert user stats safely — re-read inside the same transaction
             cursor.execute(
                 """INSERT INTO USER_GAME_STATS (user_id, total_xp, dream_coins, total_coins_earned)
                    VALUES (%s, %s, %s, %s)
                    ON DUPLICATE KEY UPDATE
-                       total_xp = total_xp + %s,
-                       dream_coins = dream_coins + %s,
-                       total_coins_earned = total_coins_earned + %s""",
-                (user_id, xp_reward, coins_reward, coins_reward, xp_reward, coins_reward, coins_reward)
+                       total_xp            = total_xp + VALUES(total_xp),
+                       dream_coins         = dream_coins + VALUES(dream_coins),
+                       total_coins_earned  = total_coins_earned + VALUES(total_coins_earned)""",
+                (user_id, xp_reward, coins_reward, coins_reward)
             )
 
             # Check for level up
             cursor.execute("SELECT total_xp FROM USER_GAME_STATS WHERE user_id = %s", (user_id,))
-            current_xp = cursor.fetchone()['total_xp']
+            row = cursor.fetchone()
+            current_xp = row['total_xp'] if row else xp_reward
             new_level = (current_xp // 100) + 1
 
             cursor.execute(
@@ -163,24 +171,17 @@ def calculate_xp_reward(game_name, score, level):
     """Calculate XP reward based on game and score"""
     base_xp = 0
     level_bonus = 0
-    
+
     if game_name == "Flappy Bird":
-        # 1 XP per 50 points, max 75 XP
         base_xp = min(75, score // 50)
-        # Level bonus: 5 XP per level
         level_bonus = (level - 1) * 5
     elif game_name == "Super Mario":
-        # 1 XP per 10 points, max 100 XP
         base_xp = min(100, score // 10)
-        # Level bonus: 10 XP per level (level 1 = 0 bonus, level 2 = 10, etc.)
         level_bonus = (level - 1) * 10
-        # Cap total at 150 XP
         total_xp = base_xp + level_bonus
         return max(3, min(150, total_xp))
-    
+
     total_xp = base_xp + level_bonus
-    
-    # Minimum 3 XP
     return max(3, total_xp)
 
 
@@ -199,7 +200,6 @@ def get_leaderboard(game_name):
 
     cursor = conn.cursor(dictionary=True)
     try:
-        # Get game_id
         cursor.execute("SELECT game_id FROM GAME WHERE game_name = %s AND is_active = TRUE", (game_name,))
         game = cursor.fetchone()
 
@@ -208,7 +208,6 @@ def get_leaderboard(game_name):
 
         game_id = game['game_id']
 
-        # Strict-mode-safe ranking: pick one best row per user, then rank globally.
         cursor.execute(
             """WITH ranked_user_scores AS (
                    SELECT
@@ -236,13 +235,8 @@ def get_leaderboard(game_name):
         )
         leaderboard = cursor.fetchall()
 
-        # Add rank to each entry
         for index, entry in enumerate(leaderboard):
             entry['rank'] = index + 1
-
-        print(f"Leaderboard for {game_name}: {len(leaderboard)} entries")
-        for entry in leaderboard:
-            print(f"  - {entry['username']}: {entry['score']} points")
 
         return jsonify({
             "game_name": game_name,
@@ -256,6 +250,7 @@ def get_leaderboard(game_name):
     finally:
         cursor.close()
         conn.close()
+
 
 @games_bp.route('/api/games/global-leaderboard', methods=['GET'])
 def get_global_leaderboard():
@@ -334,7 +329,6 @@ def get_user_scores(user_id):
             (user_id,)
         )
         scores = cursor.fetchall()
-
         return jsonify({"scores": scores}), 200
 
     except Exception as e:
@@ -353,16 +347,14 @@ def get_user_rank(user_id, game_name):
 
     cursor = conn.cursor(dictionary=True)
     try:
-        # Get game_id
         cursor.execute("SELECT game_id FROM GAME WHERE game_name = %s AND is_active = TRUE", (game_name,))
         game = cursor.fetchone()
-        
+
         if not game:
             return jsonify({"error": "Game not found"}), 404
 
         game_id = game['game_id']
 
-        # Get user's best score
         cursor.execute(
             """SELECT MAX(score) as best_score, MAX(level) as best_level, COUNT(*) as total_plays
                FROM GAME_SCORE
@@ -380,7 +372,6 @@ def get_user_rank(user_id, game_name):
                 "total_plays": 0
             }), 200
 
-        # Get user's rank
         cursor.execute(
             """SELECT COUNT(*) + 1 as player_rank
                FROM GAME_SCORE
@@ -405,4 +396,3 @@ def get_user_rank(user_id, game_name):
     finally:
         cursor.close()
         conn.close()
-

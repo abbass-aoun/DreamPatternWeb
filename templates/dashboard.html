@@ -5,11 +5,359 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Dream Pattern Analysis</title>
     <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+    <style>
+        /* ── DASHBOARD-ONLY OVERRIDES ── */
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: #080b14;
+            overflow-x: hidden;
+        }
+
+        /* Starfield canvas */
+        #starfield {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* Ambient orbs */
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: 0.18;
+            pointer-events: none;
+            z-index: 0;
+            animation: drift 20s ease-in-out infinite alternate;
+        }
+        .orb-1 { width: 600px; height: 600px; background: #6366f1; top: -200px; left: -150px; animation-delay: 0s; }
+        .orb-2 { width: 500px; height: 500px; background: #8b5cf6; bottom: -150px; right: -100px; animation-delay: -8s; }
+        .orb-3 { width: 300px; height: 300px; background: #06b6d4; top: 40%; left: 55%; animation-delay: -4s; }
+
+        @keyframes drift {
+            from { transform: translate(0, 0) scale(1); }
+            to   { transform: translate(40px, 30px) scale(1.08); }
+        }
+
+        /* Navbar override */
+        .navbar {
+            background: rgba(8, 11, 20, 0.7);
+            border-bottom: 1px solid rgba(99, 102, 241, 0.12);
+            position: relative;
+            z-index: 100;
+        }
+        .navbar-brand {
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+            font-size: 1.4rem;
+            letter-spacing: -0.02em;
+        }
+        .navbar-nav a { font-family: 'DM Sans', sans-serif; font-size: 0.875rem; }
+
+        /* ── HERO HEADER ── */
+        .dream-hero {
+            position: relative;
+            z-index: 2;
+            padding: 4rem 0 2rem;
+            text-align: center;
+        }
+        .dream-hero .eyebrow {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.75rem;
+            font-weight: 500;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: #818cf8;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        .dream-hero .eyebrow::before,
+        .dream-hero .eyebrow::after {
+            content: '';
+            display: block;
+            width: 40px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #818cf8);
+        }
+        .dream-hero .eyebrow::after { background: linear-gradient(90deg, #818cf8, transparent); }
+
+        .dream-hero h1 {
+            font-family: 'Syne', sans-serif;
+            font-size: clamp(2.2rem, 5vw, 3.8rem);
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            line-height: 1.1;
+            color: #f1f5f9;
+            margin-bottom: 0.5rem;
+        }
+        .dream-hero h1 .name-highlight {
+            background: linear-gradient(135deg, #a78bfa, #818cf8, #67e8f9);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .dream-hero .subtitle {
+            font-size: 1rem;
+            color: #64748b;
+            font-weight: 300;
+            font-style: italic;
+            margin-top: 0.5rem;
+        }
+
+        /* ── STAT CARDS ── */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin: 2.5rem 0;
+            position: relative;
+            z-index: 2;
+        }
+        @media (max-width: 900px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 500px) { .stats-grid { grid-template-columns: 1fr; } }
+
+        .stat-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 1.25rem;
+            padding: 1.75rem 1.5rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease, border-color 0.3s ease;
+            cursor: default;
+        }
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse at top left, rgba(99,102,241,0.08), transparent 70%);
+            pointer-events: none;
+        }
+        .stat-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(99,102,241,0.25);
+        }
+        .stat-icon {
+            font-size: 1.75rem;
+            margin-bottom: 0.75rem;
+            display: block;
+            filter: drop-shadow(0 0 12px rgba(129,140,248,0.5));
+        }
+        .stat-value {
+            font-family: 'Syne', sans-serif;
+            font-size: 2.25rem;
+            font-weight: 700;
+            color: #e2e8f0;
+            line-height: 1;
+            margin-bottom: 0.4rem;
+        }
+        .stat-label {
+            font-size: 0.7rem;
+            font-weight: 500;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: #475569;
+        }
+
+        /* ── GAME PROGRESS BANNER ── */
+        #gameStats .game-progress-bar {
+            position: relative;
+            z-index: 2;
+            background: linear-gradient(135deg, rgba(99,102,241,0.12), rgba(139,92,246,0.08));
+            border: 1px solid rgba(99,102,241,0.2);
+            border-radius: 1rem;
+            padding: 1.25rem 1.75rem;
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+        .gp-icon { font-size: 2rem; }
+        .gp-info { flex: 1; }
+        .gp-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: #818cf8;
+            margin-bottom: 0.2rem;
+        }
+        .gp-stats {
+            font-size: 0.9rem;
+            color: #94a3b8;
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .gp-stat { display: flex; align-items: center; gap: 0.4rem; }
+        .gp-stat strong { color: #e2e8f0; font-family: 'Syne', sans-serif; font-weight: 700; }
+
+        /* ── SECTION HEADINGS ── */
+        .section-heading {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #e2e8f0;
+            letter-spacing: -0.01em;
+            margin-bottom: 0.25rem;
+        }
+        .section-sub {
+            font-size: 0.8rem;
+            color: #475569;
+            margin-bottom: 1.5rem;
+        }
+
+        /* ── DREAM ITEMS ── */
+        .dream-feed {
+            position: relative;
+            z-index: 2;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 1.25rem;
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+        .dream-feed-header {
+            padding: 1.5rem 1.75rem 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .dream-item {
+            padding: 1.5rem 1.75rem;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            transition: background 0.2s ease;
+        }
+        .dream-item:last-child { border-bottom: none; }
+        .dream-item:hover { background: rgba(99,102,241,0.04); }
+        .dream-item h4 {
+            font-family: 'Syne', sans-serif;
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #e2e8f0;
+            margin: 0 0 0.4rem 0;
+        }
+        .dream-item p {
+            font-size: 0.82rem;
+            color: #475569;
+            margin: 0 0 0.9rem 0;
+            line-height: 1.6;
+        }
+
+        /* ── ACTION GRID ── */
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 1rem;
+            position: relative;
+            z-index: 2;
+        }
+        @media (max-width: 768px) { .action-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 900px) { .action-grid { grid-template-columns: repeat(2, 1fr); } }
+
+        .action-card {
+            background: rgba(255,255,255,0.025);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 1.25rem;
+            padding: 1.5rem;
+            text-decoration: none;
+            display: block;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+        .action-card::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--ac-color, #6366f1), transparent);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.3s ease;
+        }
+        .action-card:hover { transform: translateY(-3px); border-color: rgba(255,255,255,0.1); }
+        .action-card:hover::after { transform: scaleX(1); }
+
+        .action-emoji { font-size: 1.75rem; margin-bottom: 0.75rem; display: block; }
+        .action-title {
+            font-family: 'Syne', sans-serif;
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: #e2e8f0;
+            margin-bottom: 0.4rem;
+        }
+        .action-desc { font-size: 0.78rem; color: #475569; line-height: 1.5; margin-bottom: 1rem; }
+        .action-link {
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            color: var(--ac-color, #818cf8);
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            text-decoration: none;
+        }
+        .action-link::after { content: '→'; transition: transform 0.2s; }
+        .action-card:hover .action-link::after { transform: translateX(4px); }
+
+        /* ── CONTAINER ── */
+        .db-container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 1.5rem 4rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* ── BADGE TWEAKS ── */
+        .badge {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.68rem;
+            font-weight: 500;
+            letter-spacing: 0.04em;
+            padding: 0.2rem 0.65rem;
+            border-radius: 2rem;
+        }
+
+        /* ── BUTTON TWEAKS ── */
+        .btn {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 500;
+            letter-spacing: 0.02em;
+            border-radius: 0.6rem;
+            padding: 0.55rem 1.1rem;
+        }
+
+        /* Loading pulse */
+        @keyframes pulse-fade {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 0.8; }
+        }
+        .loading-pulse { animation: pulse-fade 1.5s ease infinite; color: #475569; font-size: 0.875rem; padding: 2rem; text-align: center; }
+    </style>
 </head>
 <body>
+
+    <!-- Ambient background -->
+    <canvas id="starfield"></canvas>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+
     <nav class="navbar">
         <div class="container">
-            <div class="navbar-brand">DreamFlow</div>
+            <div class="navbar-brand">✦ DreamFlow</div>
             <ul class="navbar-nav">
                 <li><a href="/dashboard">Dashboard</a></li>
                 <li><a href="/add-dream">Add Dream</a></li>
@@ -24,179 +372,234 @@
     </nav>
 
     <div id="dashboardContent">
-        <div class="dashboard-header">
-            <div class="container">
-                <h1>Welcome, <span id="userName"></span>!</h1>
-                <p class="text-muted">Track your dreams, discover patterns, unlock insights</p>
-            </div>
+
+        <!-- Hero -->
+        <div class="dream-hero">
+            <div class="eyebrow">Dream Journal</div>
+            <h1>Welcome back, <span class="name-highlight" id="userName"></span></h1>
+            <p class="subtitle">Your subconscious awaits exploration</p>
         </div>
 
-        <div class="container">
-            <!-- Game Stats (XP, Level, Coins, Streak) -->
+        <div class="db-container">
+
+            <!-- Game Stats -->
             <div id="gameStats"></div>
-            
+
             <!-- Stats Grid -->
             <div class="stats-grid">
                 <div class="stat-card">
+                    <span class="stat-icon">🌙</span>
                     <div class="stat-value" id="totalDreams">0</div>
                     <div class="stat-label">Total Dreams</div>
                 </div>
                 <div class="stat-card">
+                    <span class="stat-icon">✨</span>
                     <div class="stat-value" id="lucidDreams">0</div>
                     <div class="stat-label">Lucid Dreams</div>
                 </div>
                 <div class="stat-card">
+                    <span class="stat-icon">⚡</span>
                     <div class="stat-value" id="avgIntensity">0</div>
                     <div class="stat-label">Avg Intensity</div>
                 </div>
                 <div class="stat-card">
+                    <span class="stat-icon">🔮</span>
                     <div class="stat-value" id="lucidPercentage">0%</div>
                     <div class="stat-label">Lucid Rate</div>
                 </div>
             </div>
 
             <!-- Recent Dreams -->
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Recent Dreams</h3>
-                    <p class="card-subtitle">Your latest dream entries</p>
+            <div class="dream-feed">
+                <div class="dream-feed-header">
+                    <div class="section-heading">Recent Dreams</div>
+                    <div class="section-sub">Your latest dream entries</div>
                 </div>
                 <div id="recentDreams">
-                    <p class="text-muted">Loading dreams...</p>
+                    <p class="loading-pulse">Loading dreams…</p>
                 </div>
             </div>
 
-            <!-- Quick Actions -->
-            <div class="grid grid-3 mt-3">
-                <div class="card">
-                    <h3>Record a New Dream</h3>
-                    <p class="text-muted mb-2">Capture your latest dream experience</p>
-                    <a href="/add-dream" class="btn btn-primary">Add Dream</a>
+            <!-- Quick Actions Row 1 -->
+            <div style="margin-bottom:0.5rem; position:relative; z-index:2;">
+                <div class="section-heading">Quick Actions</div>
+                <div class="section-sub" style="margin-bottom:1rem;">Everything you need, one click away</div>
+            </div>
+
+            <div class="action-grid" style="margin-bottom:1rem;">
+                <div class="action-card" style="--ac-color:#818cf8;" onclick="window.location.href='/add-dream'">
+                    <span class="action-emoji"></span>
+                    <div class="action-title">Record a Dream</div>
+                    <div class="action-desc">Capture your latest dream before it fades away</div>
+                    <span class="action-link">Add Dream</span>
                 </div>
-                
-                <div class="card">
-                    <h3>AI Dream Analysis</h3>
-                    <p class="text-muted mb-2">Get insights from our AI chatbot</p>
-                    <a href="/chat" class="btn btn-primary">Start Chat</a>
+                <div class="action-card" style="--ac-color:#a78bfa;" onclick="window.location.href='/chat'">
+                    <span class="action-emoji"></span>
+                    <div class="action-title">AI Dream Analysis</div>
+                    <div class="action-desc">Get deep insights from our AI dream analyst</div>
+                    <span class="action-link">Start Chat</span>
                 </div>
-                
-                <div class="card">
-                    <h3>Timeline</h3>
-                    <p class="text-muted mb-2">View your dreams in chronological order</p>
-                    <a href="/timeline" class="btn btn-primary">View Timeline</a>
+                <div class="action-card" style="--ac-color:#67e8f9;" onclick="window.location.href='/timeline'">
+                    <span class="action-emoji"></span>
+                    <div class="action-title">Timeline</div>
+                    <div class="action-desc">Browse your dream history on a calendar view</div>
+                    <span class="action-link">View Timeline</span>
                 </div>
             </div>
 
-            <!-- Game Features -->
-            <div class="grid grid-3 mt-3">
-                <div class="card">
-                    <h3>🎮 Games</h3>
-                    <p class="text-muted mb-2">Play Flappy Bird </p>
-                    <a href="/games" class="btn btn-primary">Play Now</a>
+            <div class="action-grid">
+                <div class="action-card" style="--ac-color:#34d399;" onclick="window.location.href='/games'">
+                    <span class="action-emoji">🎮</span>
+                    <div class="action-title">Games</div>
+                    <div class="action-desc">Play Flappy Bird and climb the leaderboard</div>
+                    <span class="action-link">Play Now</span>
                 </div>
-                
-                <div class="card">
-                    <h3>Search Dreams</h3>
-                    <p class="text-muted mb-2">Search through your dream journal</p>
-                    <a href="/search" class="btn btn-primary">Search</a>
+                <div class="action-card" style="--ac-color:#f472b6;" onclick="window.location.href='/search'">
+                    <span class="action-emoji"></span>
+                    <div class="action-title">Search Dreams</div>
+                    <div class="action-desc">Filter and search through your entire journal</div>
+                    <span class="action-link">Search</span>
                 </div>
-                
-                <div class="card">
-                    <h3>AI Analysis</h3>
-                    <p class="text-muted mb-2">Get AI-powered dream insights</p>
-                    <a href="/chat" class="btn btn-primary">Analyze</a>
-                </div>
-            </div>
-            
-            <!-- More Features -->
-            <div class="grid grid-2 mt-3">
-                <div class="card">
-                    <h3>Global Leaderboard</h3>
-                    <p class="text-muted mb-2">See top players across all games</p>
-                    <a href="/games" class="btn btn-primary">View Rankings</a>
-                </div>
-                
-                <div class="card">
-                    <h3>Dream Timeline</h3>
-                    <p class="text-muted mb-2">Browse dream history on a calendar</p>
-                    <a href="/timeline" class="btn btn-primary">Open Timeline</a>
+                <div class="action-card" style="--ac-color:#fb923c;" onclick="window.location.href='/analytics'">
+                    <span class="action-emoji"></span>
+                    <div class="action-title">Analytics</div>
+                    <div class="action-desc">Discover patterns and trends in your dreams</div>
+                    <span class="action-link">View Analytics</span>
                 </div>
             </div>
-            
+
         </div>
     </div>
 
     <script src="/static/js/app.js"></script>
     <script src="/static/js/games.js"></script>
     <script>
-        // Initialize dashboard on load
+        // ── STARFIELD ──
+        (function () {
+            const canvas = document.getElementById('starfield');
+            const ctx = canvas.getContext('2d');
+            let stars = [];
+
+            function resize() {
+                canvas.width  = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+
+            function init() {
+                resize();
+                stars = Array.from({ length: 120 }, () => ({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    r: Math.random() * 1.2 + 0.2,
+                    o: Math.random() * 0.6 + 0.1,
+                    s: Math.random() * 0.003 + 0.001,
+                    d: Math.random() > 0.5 ? 1 : -1,
+                }));
+            }
+
+            function draw() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                stars.forEach(s => {
+                    s.o += s.s * s.d;
+                    if (s.o > 0.7 || s.o < 0.1) s.d *= -1;
+                    ctx.beginPath();
+                    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(148,163,184,${s.o})`;
+                    ctx.fill();
+                });
+                requestAnimationFrame(draw);
+            }
+
+            window.addEventListener('resize', init);
+            init();
+            draw();
+        })();
+
+        // ── DASHBOARD LOGIC ──
         document.addEventListener('DOMContentLoaded', async () => {
             const user = checkAuth();
             if (!user) return;
 
-            // Display username
             document.getElementById('userName').textContent = user.username;
 
-            // Load statistics
             await loadUserStats(user.user_id);
-
-            // Load recent dreams
             await loadRecentDreams(user.user_id);
 
-            // Load game stats
             if (typeof loadGameStats === 'function') {
                 await loadGameStats(user.user_id);
             }
         });
 
-        // Override loadRecentDreams with simplified version (only View Details button)
+        // Override loadGameStats to use new markup
+        async function loadGameStats(userId) {
+            const container = document.getElementById('gameStats');
+            if (!container) return;
+            try {
+                const response = await fetch(`${API_BASE}/game/stats/${userId}`);
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || 'Failed');
+                container.innerHTML = `
+                    <div class="game-progress-bar" style="margin-bottom:2rem;">
+                        <span class="gp-icon">🎮</span>
+                        <div class="gp-info">
+                            <div class="gp-title">Game Progress</div>
+                            <div class="gp-stats">
+                                <span class="gp-stat">⭐ Level <strong>${data.current_level || 1}</strong></span>
+                                <span class="gp-stat">⚡ <strong>${data.total_xp || 0}</strong> XP</span>
+                                <span class="gp-stat">🪙 <strong>${data.dream_coins || 0}</strong> Coins</span>
+                            </div>
+                        </div>
+                        <a href="/games" class="btn btn-primary" style="white-space:nowrap;">Play Games</a>
+                    </div>
+                `;
+            } catch (e) {
+                container.innerHTML = '';
+            }
+        }
+
+        // Override loadRecentDreams with new styling
         async function loadRecentDreams(userId) {
             try {
                 const response = await fetch(`${API_BASE}/dreams/user/${userId}`);
                 const dreams = await response.json();
-
                 const container = document.getElementById('recentDreams');
 
                 if (response.ok && dreams.length > 0) {
                     container.innerHTML = dreams.slice(0, 5).map(dream => `
-                        <div class="dream-item" style="padding: 1.5rem; border-bottom: 1px solid var(--border);">
-                            <div style="display: flex; justify-content: space-between; align-items: start; gap: 1rem;">
-                                <div style="flex: 1;">
-                                    <h4 style="margin: 0 0 0.5rem 0;">${dream.dname}</h4>
-                                    <p class="text-muted" style="margin: 0 0 1rem 0; font-size: 0.875rem;">
-                                        ${dream.description.substring(0, 150)}${dream.description.length > 150 ? '...' : ''}
-                                    </p>
-                                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;">
-                                        <span class="badge" style="background: var(--primary); color: white; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.75rem;">
-                                            Intensity: ${dream.intensity}/10
+                        <div class="dream-item">
+                            <div style="display:flex; justify-content:space-between; align-items:start; gap:1rem;">
+                                <div style="flex:1;">
+                                    <h4>${dream.dname}${dream.lucid ? ' <span style="font-size:0.75rem; color:#818cf8;">✨ Lucid</span>' : ''}</h4>
+                                    <p>${dream.description.substring(0, 130)}${dream.description.length > 130 ? '…' : ''}</p>
+                                    <div style="display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center;">
+                                        <span class="badge" style="background:rgba(99,102,241,0.15); color:#818cf8; border:1px solid rgba(99,102,241,0.2);">⚡ ${dream.intensity}/10</span>
+                                        <span class="badge" style="background:rgba(255,255,255,0.04); color:#475569; border:1px solid rgba(255,255,255,0.06);">
+                                            ${new Date(dream.dream_date).toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'})}
                                         </span>
-                                        ${dream.lucid ? '<span class="badge" style="background: var(--success); color: white; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.75rem;">Lucid</span>' : ''}
-                                        <span class="badge" style="background: var(--bg-darker); color: var(--text-muted); padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.75rem;">
-                                            ${new Date(dream.dream_date).toLocaleDateString()}
-                                        </span>
-                                    </div>
-                                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                                        <button onclick="viewDreamDetail(${dream.dream_id})" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.875rem;">
-                                            View Details
-                                        </button>
-                                        <button onclick="deleteDream(${dream.dream_id})" class="btn btn-danger" style="padding: 0.5rem 1rem; font-size: 0.875rem;">
-                                            Delete
-                                        </button>
+                                        <div style="margin-left:auto; display:flex; gap:0.5rem;">
+                                            <button onclick="viewDreamDetail(${dream.dream_id})" class="btn btn-primary" style="padding:0.4rem 0.9rem; font-size:0.75rem;">View</button>
+                                            <button onclick="deleteDream(${dream.dream_id})" class="btn btn-danger" style="padding:0.4rem 0.9rem; font-size:0.75rem;">Delete</button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     `).join('');
                 } else {
-                    container.innerHTML = '<p class="text-muted" style="padding: 2rem; text-align: center;">No dreams recorded yet. Start by adding your first dream!</p>';
+                    container.innerHTML = `
+                        <div style="padding:3rem; text-align:center;">
+                            <div style="font-size:3rem; margin-bottom:1rem;">🌙</div>
+                            <p style="color:#475569; font-size:0.875rem;">No dreams recorded yet.<br>Start by adding your first dream!</p>
+                            <a href="/add-dream" class="btn btn-primary" style="margin-top:1rem; display:inline-block;">Add Your First Dream</a>
+                        </div>
+                    `;
                 }
             } catch (error) {
                 console.error('Dreams error:', error);
-                document.getElementById('recentDreams').innerHTML = '<p class="text-muted">Error loading dreams.</p>';
+                document.getElementById('recentDreams').innerHTML = '<p class="loading-pulse">Error loading dreams.</p>';
             }
         }
 
-        // View dream details page
         function viewDreamDetail(dreamId) {
             window.location.href = `/dream-detail?id=${dreamId}`;
         }

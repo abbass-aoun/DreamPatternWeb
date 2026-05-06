@@ -1,3 +1,6 @@
+from dotenv import load_dotenv
+load_dotenv()
+
 from flask import Flask, jsonify, render_template
 from flask_cors import CORS
 
@@ -57,7 +60,7 @@ def chat():
 def subscription():
     return render_template('subscription.html')
 
-@app.route("/dream-detail")  # ✅ NEW ROUTE
+@app.route("/dream-detail")
 def dream_detail():
     return render_template('dream_detail.html')
 
@@ -80,7 +83,6 @@ def search():
 @app.route("/logout")
 def logout():
     return render_template('login.html')
-
 
 
 # ===== API INFO ROUTE =====
@@ -109,9 +111,9 @@ def internal_error(error):
 # Run Flask
 if __name__ == "__main__":
     print("=" * 50)
-    print("ðŸŒ™ DREAM PATTERN ANALYSIS SERVER")
+    print("🌙 DREAM PATTERN ANALYSIS SERVER")
     print("=" * 50)
-    print("âœ… Server starting on http://localhost:5000")
-    print("âœ… Open your browser and go to: http://localhost:5000")
+    print("✅ Server starting on http://localhost:5000")
+    print("✅ Open your browser and go to: http://localhost:5000")
     print("=" * 50)
     app.run(debug=True, host='0.0.0.0', port=5000)
