@@ -93,6 +93,9 @@ ProjectDB.sql
 GAME\_SYSTEM\_DATABASE.sql
 DREAM\_FEATURES\_DATABASE.sql
 GAMES\_LEADERBOARD\_DATABASE.sql
+ProjectDB.sql
+VERIFY\_SETUP.sql
+
 ```
 
 ### 6\. Run the app
